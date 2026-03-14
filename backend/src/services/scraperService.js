@@ -4,8 +4,9 @@ import { RawItem } from '../models/RawItem.js';
 import { geocodeCity } from './geocodeService.js';
 import { hashContent, normalizeUrl } from '../utils/dedupe.js';
 import { companySeeds } from '../config/companySeeds.js';
+import { cityDictionary } from '../config/cityDictionary.js';
 
-const CITY_REGEX = /\b(Toronto|Vancouver|Montreal|Calgary|Ottawa|New York|San Francisco|Los Angeles|Phoenix|Austin|London|Paris|Tokyo|Beijing|Shanghai|Shenzhen|Singapore|Sydney|Berlin|Dubai)\b/i;
+const CITY_REGEX = new RegExp(`\\b(${cityDictionary.join('|')})\\b`, 'i');
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -31,6 +32,14 @@ function inferDeploymentStatus(text = '') {
   if (t.includes('plan') || t.includes('announce')) return 'announced';
   return 'unknown';
 }
+
+const sourceFeeds = [
+  { name: 'Robot Report', url: 'https://www.therobotreport.com/feed/', robotType: 'unknown' },
+  { name: 'TechCrunch', url: 'https://techcrunch.com/category/robotics/feed/', robotType: 'unknown' },
+  { name: 'Reuters Tech', url: 'https://www.reutersagency.com/feed/?best-topics=technology', robotType: 'unknown' },
+  { name: 'Waymo Blog', url: 'https://waymo.com/blog/rss/', robotType: 'robotaxi' },
+  { name: 'Starship News', url: 'https://www.starship.xyz/news/rss.xml', robotType: 'delivery' }
+];
 
 async function upsertItems(rows, base) {
   const stats = { inserted: 0, duplicateUrl: 0, duplicateContent: 0, failed: 0 };
@@ -126,6 +135,61 @@ export async function crawlSearch({ query, limit = 20, userAgent, requestDelayMs
   });
 
   return { query, scanned: rows.length, ...stats };
+}
+
+export async function crawlFeedSources({ userAgent, perFeedLimit = 10, requestDelayMs = 800 }) {
+  const details = [];
+
+  for (const feed of sourceFeeds) {
+    try {
+      const { data: xml } = await axios.get(feed.url, { headers: { 'User-Agent': userAgent }, timeout: 15000 });
+      const $xml = cheerio.load(xml, { xmlMode: true });
+      const rows = [];
+
+      $xml('item').each((_, el) => {
+        if (rows.length >= perFeedLimit) return;
+        const title = $xml(el).find('title').first().text().trim();
+        const sourceUrl = $xml(el).find('link').first().text().trim();
+        const snippet = $xml(el).find('description').first().text().replace(/<[^>]+>/g, ' ').trim();
+        const publishedText = $xml(el).find('pubDate').first().text().trim();
+        if (title && sourceUrl) {
+          rows.push({
+            title,
+            sourceUrl,
+            snippet,
+            robotType: feed.robotType,
+            company: feed.name,
+            publishedAt: publishedText ? new Date(publishedText) : null
+          });
+        }
+      });
+
+      const stats = await upsertItems(rows, {
+        query: `${feed.name} feed`,
+        source: feed.name,
+        sourceType: 'source-feed',
+        userAgent,
+        requestDelayMs
+      });
+
+      details.push({ source: feed.name, scanned: rows.length, ...stats });
+    } catch (error) {
+      details.push({ source: feed.name, scanned: 0, inserted: 0, duplicateUrl: 0, duplicateContent: 0, failed: 1, error: error.message });
+    }
+  }
+
+  const summary = details.reduce(
+    (acc, s) => {
+      acc.inserted += s.inserted || 0;
+      acc.duplicateUrl += s.duplicateUrl || 0;
+      acc.duplicateContent += s.duplicateContent || 0;
+      acc.failed += s.failed || 0;
+      return acc;
+    },
+    { inserted: 0, duplicateUrl: 0, duplicateContent: 0, failed: 0 }
+  );
+
+  return { feeds: details.length, perFeedLimit, summary, details };
 }
 
 export async function crawlCompanySources({ userAgent, perSourceLimit = 8, requestDelayMs = 1200 }) {

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { RawItem } from '../models/RawItem.js';
-import { crawlSearch, crawlCompanySources } from '../services/scraperService.js';
+import { crawlSearch, crawlCompanySources, crawlFeedSources } from '../services/scraperService.js';
 import { sourcePools } from '../config/sources.js';
 
 export const apiRouter = Router();
@@ -41,8 +41,22 @@ apiRouter.post('/crawl/companies', async (req, res) => {
   }
 });
 
+apiRouter.post('/crawl/feeds', async (req, res) => {
+  try {
+    const { perFeedLimit = 10 } = req.body ?? {};
+    const result = await crawlFeedSources({
+      perFeedLimit: Number(perFeedLimit),
+      userAgent: process.env.USER_AGENT,
+      requestDelayMs: Number(process.env.REQUEST_DELAY_MS || 1200)
+    });
+    return res.json(result);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 apiRouter.get('/items', async (req, res) => {
-  const { q, city, robotType, limit = 100 } = req.query;
+  const { q, city, robotType, sourceType, company, limit = 100 } = req.query;
   const filter = {};
   if (q) {
     filter.$or = [
@@ -53,6 +67,8 @@ apiRouter.get('/items', async (req, res) => {
   }
   if (city) filter.city = city;
   if (robotType) filter.robotType = robotType;
+  if (sourceType) filter.sourceType = sourceType;
+  if (company) filter.company = company;
 
   const data = await RawItem.find(filter).sort({ createdAt: -1 }).limit(Number(limit));
   res.json({ total: data.length, data });

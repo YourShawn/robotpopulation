@@ -13,6 +13,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
   const [robotType, setRobotType] = useState('');
+  const [sourceType, setSourceType] = useState('');
   const [cityItems, setCityItems] = useState([]);
   const [stats, setStats] = useState({ totalItems: 0, totalCities: 0, byRobotType: [] });
 
@@ -41,8 +42,29 @@ export default function App() {
   }
 
   async function loadCityItems(city) {
-    const { data } = await axios.get(`${API_BASE}/items`, { params: { city, robotType: robotType || undefined, limit: 20 } });
+    const { data } = await axios.get(`${API_BASE}/items`, {
+      params: {
+        city,
+        robotType: robotType || undefined,
+        sourceType: sourceType || undefined,
+        limit: 20
+      }
+    });
     setCityItems(data.data || []);
+  }
+
+  async function runFeedCrawl() {
+    try {
+      setLoading(true);
+      setMsg('正在跑核心来源 RSS 抓取...');
+      const { data } = await axios.post(`${API_BASE}/crawl/feeds`, { perFeedLimit: 8 });
+      setMsg(`来源抓取完成：新增 ${data.summary.inserted}，重复URL ${data.summary.duplicateUrl}`);
+      await loadCities();
+    } catch (e) {
+      setMsg(`失败：${e.response?.data?.error || e.message}`);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function runCompanyCrawl() {
@@ -97,8 +119,16 @@ export default function App() {
           <option value="unknown">unknown</option>
         </select>
 
+        <label>来源类型筛选</label>
+        <select value={sourceType} onChange={(e) => setSourceType(e.target.value)}>
+          <option value="">全部</option>
+          <option value="source-feed">source-feed</option>
+          <option value="search-news">search-news</option>
+        </select>
+
         <button onClick={runCrawl} disabled={loading}>{loading ? '抓取中...' : '关键词抓取'}</button>
-        <button onClick={runCompanyCrawl} disabled={loading}>{loading ? '抓取中...' : '公司池抓取(P0)'} </button>
+        <button onClick={runCompanyCrawl} disabled={loading}>{loading ? '抓取中...' : '公司池抓取(P0)'}</button>
+        <button onClick={runFeedCrawl} disabled={loading}>{loading ? '抓取中...' : '核心来源抓取(RSS)'}</button>
         <button onClick={loadCities}>刷新地图</button>
         <p className="msg">{msg}</p>
 
