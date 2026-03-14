@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { RawItem } from '../models/RawItem.js';
 import { crawlSearch } from '../services/scraperService.js';
+import { sourcePools } from '../config/sources.js';
 
 export const apiRouter = Router();
 
@@ -40,6 +41,20 @@ apiRouter.get('/items', async (req, res) => {
 
   const data = await RawItem.find(filter).sort({ createdAt: -1 }).limit(Number(limit));
   res.json({ total: data.length, data });
+});
+
+apiRouter.get('/sources', async (_, res) => {
+  res.json(sourcePools);
+});
+
+apiRouter.get('/stats', async (_, res) => {
+  const [totalItems, totalCities, byRobotType] = await Promise.all([
+    RawItem.countDocuments(),
+    RawItem.distinct('city').then((c) => c.filter((x) => x && x !== 'Unknown').length),
+    RawItem.aggregate([{ $group: { _id: '$robotType', count: { $sum: 1 } } }, { $sort: { count: -1 } }])
+  ]);
+
+  res.json({ totalItems, totalCities, byRobotType });
 });
 
 apiRouter.get('/map/cities', async (_, res) => {

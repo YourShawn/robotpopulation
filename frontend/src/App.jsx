@@ -12,6 +12,8 @@ export default function App() {
   const [crawlLimit, setCrawlLimit] = useState(20);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
+  const [cityItems, setCityItems] = useState([]);
+  const [stats, setStats] = useState({ totalItems: 0, totalCities: 0, byRobotType: [] });
 
   const pointLayer = useMemo(
     () => ({
@@ -29,8 +31,17 @@ export default function App() {
   );
 
   async function loadCities() {
-    const { data } = await axios.get(`${API_BASE}/map/cities`);
-    setGeojson(data);
+    const [citiesRes, statsRes] = await Promise.all([
+      axios.get(`${API_BASE}/map/cities`),
+      axios.get(`${API_BASE}/stats`)
+    ]);
+    setGeojson(citiesRes.data);
+    setStats(statsRes.data);
+  }
+
+  async function loadCityItems(city) {
+    const { data } = await axios.get(`${API_BASE}/items`, { params: { city, limit: 20 } });
+    setCityItems(data.data || []);
   }
 
   useEffect(() => {
@@ -65,6 +76,24 @@ export default function App() {
         <button onClick={runCrawl} disabled={loading}>{loading ? '抓取中...' : '开始抓取'}</button>
         <button onClick={loadCities}>刷新地图</button>
         <p className="msg">{msg}</p>
+
+        <div className="stats">
+          <div>总条目：{stats.totalItems}</div>
+          <div>覆盖城市：{stats.totalCities}</div>
+        </div>
+
+        {selected?.properties?.city && (
+          <div className="cityPanel">
+            <h3>{selected.properties.city}</h3>
+            <ul>
+              {cityItems.map((item) => (
+                <li key={item._id}>
+                  <a href={item.sourceUrl} target="_blank" rel="noreferrer">{item.title || item.sourceUrl}</a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </aside>
 
       <main className="mapWrap">
@@ -73,7 +102,10 @@ export default function App() {
           mapStyle={TILE_STYLE}
           onClick={(e) => {
             const f = e.features?.[0];
-            if (f?.properties) setSelected(f);
+            if (f?.properties) {
+              setSelected(f);
+              loadCityItems(f.properties.city);
+            }
           }}
           interactiveLayerIds={['city-points']}
         >

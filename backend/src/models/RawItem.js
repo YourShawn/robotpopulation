@@ -15,7 +15,13 @@ const RawItemSchema = new mongoose.Schema(
       lat: Number,
       lon: Number
     },
-    tags: [String]
+    tags: [String],
+    company: { type: String, default: 'Unknown', index: true },
+    robotType: { type: String, default: 'unknown', index: true },
+    deploymentStatus: { type: String, default: 'unknown', index: true },
+    fleetSize: { type: Number, default: null },
+    sourceType: { type: String, default: 'news', index: true },
+    publishedAt: { type: Date, default: null }
   },
   { timestamps: true }
 );
