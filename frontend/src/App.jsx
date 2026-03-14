@@ -10,8 +10,11 @@ const THEMES = {
 };
 
 const I18N = {
-  zh: { title: 'Global Robot City Atlas', subtitle: '全球每个城市机器人数量可视化', stats: '全球机器人事件', cities: '覆盖城市', level: '当前地图级别', continent: '洲（Continent）', city: '城市关键词', type: '机器人类型', refresh: '刷新数据' },
-  en: { title: 'Global Robot City Atlas', subtitle: 'Robot count by cities worldwide', stats: 'Global robot events', cities: 'Covered cities', level: 'Current map level', continent: 'Continent', city: 'City keyword', type: 'Robot type', refresh: 'Refresh' }
+  zh: { title: 'Global Robot City Atlas', subtitle: '全球机器人城市分布', continent: '洲（Continent）', city: '城市关键词', type: '机器人类型', refresh: '刷新数据', all: '全部' },
+  en: { title: 'Global Robot City Atlas', subtitle: 'Robot distribution by city worldwide', continent: 'Continent', city: 'City keyword', type: 'Robot type', refresh: 'Refresh', all: 'All' },
+  es: { title: 'Atlas Global de Robots', subtitle: 'Distribución de robots por ciudad', continent: 'Continente', city: 'Palabra clave de ciudad', type: 'Tipo de robot', refresh: 'Actualizar', all: 'Todos' },
+  fr: { title: 'Atlas Mondial des Robots', subtitle: 'Répartition des robots par ville', continent: 'Continent', city: 'Mot-clé de ville', type: 'Type de robot', refresh: 'Actualiser', all: 'Tous' },
+  ja: { title: 'グローバルロボット都市アトラス', subtitle: '都市別ロボット分布', continent: '大陸', city: '都市キーワード', type: 'ロボット種別', refresh: '更新', all: 'すべて' }
 };
 
 export default function App() {
@@ -127,6 +130,9 @@ export default function App() {
                 <select value={lang} onChange={(e) => setLang(e.target.value)}>
                   <option value="zh">中文</option>
                   <option value="en">English</option>
+                  <option value="es">Español</option>
+                  <option value="fr">Français</option>
+                  <option value="ja">日本語</option>
                 </select>
                 <select value={theme} onChange={(e) => setTheme(e.target.value)}>
                   <option value="dark">Dark</option>
@@ -137,15 +143,9 @@ export default function App() {
             </div>
             <p>{t.subtitle}</p>
 
-            <div className="stats">
-              <div>{t.stats}：{stats.canonicalEvents || 0}</div>
-              <div>{t.cities}：{stats.totalCities || 0}</div>
-              <div>{t.level}：{mapLevel}</div>
-            </div>
-
             <label>{t.continent}</label>
             <select value={continent} onChange={(e) => setContinent(e.target.value)}>
-              <option value="">全部</option>
+              <option value="">{t.all}</option>
               <option value="Asia">Asia</option>
               <option value="Europe">Europe</option>
               <option value="North America">North America</option>
@@ -160,7 +160,7 @@ export default function App() {
 
             <label>{t.type}</label>
             <select value={robotType} onChange={(e) => setRobotType(e.target.value)}>
-              <option value="">全部</option>
+              <option value="">{t.all}</option>
               <option value="robotaxi">robotaxi</option>
               <option value="delivery">delivery</option>
               <option value="warehouse">warehouse</option>
