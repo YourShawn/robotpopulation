@@ -104,14 +104,15 @@ async function persistRows(rows, { query, sourceSite, sourceType, userAgent, req
 
     const mixText = `${r.title} ${r.snippet}`;
     const city = inferCity(mixText);
-    const country = city === 'Unknown' ? 'Unknown' : 'US';
-    const cCanonical = cityCanonical(city, country);
     const companyCanonical = canonicalCompany(mixText);
     const robotType = r.robotType || inferRobotType(mixText);
     const eventType = inferEventType(mixText);
     const eventDate = r.publishedAt ? new Date(r.publishedAt) : new Date();
     const { best, min, max } = extractCount(mixText);
     const location = await geocodeCity(city, userAgent);
+    const country = location?.country || (city === 'Unknown' ? 'Unknown' : 'US');
+    const province = location?.province || 'Unknown';
+    const cCanonical = cityCanonical(city, country);
     const confidenceBase = Math.min(0.95, 0.25 + sourceWeight(r.sourceUrl || sourceSite));
 
     const fact = await ExtractedFact.create({
@@ -122,7 +123,7 @@ async function persistRows(rows, { query, sourceSite, sourceType, userAgent, req
       eventType,
       city,
       cityCanonical: cCanonical,
-      province: 'Unknown',
+      province,
       country,
       location,
       countBest: best,
@@ -147,7 +148,7 @@ async function persistRows(rows, { query, sourceSite, sourceType, userAgent, req
           eventType,
           city,
           cityCanonical: cCanonical,
-          province: 'Unknown',
+          province,
           country,
           location,
           eventDate,
