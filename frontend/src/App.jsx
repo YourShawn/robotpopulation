@@ -80,10 +80,7 @@ export default function App() {
 
   const [geojson, setGeojson] = useState({ type: 'FeatureCollection', features: [] });
   const [selected, setSelected] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [msg, setMsg] = useState('');
   const [robotType, setRobotType] = useState('');
-  const [sourceType, setSourceType] = useState('');
   const [cityItems, setCityItems] = useState([]);
   const [collapsed, setCollapsed] = useState(false);
   const [viewLevel, setViewLevel] = useState('city');
@@ -106,6 +103,17 @@ export default function App() {
         1, '#ff3d71'
       ],
       'heatmap-opacity': 0.55
+    }
+  }), []);
+
+  const glowLayer = useMemo(() => ({
+    id: 'city-glow',
+    type: 'circle',
+    paint: {
+      'circle-color': '#5fd8ff',
+      'circle-radius': ['interpolate', ['linear'], ['get', 'eventCount'], 1, 10, 10, 16, 30, 24],
+      'circle-opacity': 0.18,
+      'circle-blur': 1
     }
   }), []);
 
@@ -133,7 +141,6 @@ export default function App() {
   async function loadRegionItems(props) {
     const params = {
       robotType: robotType || undefined,
-      sourceType: sourceType || undefined,
       limit: 30
     };
 
@@ -191,13 +198,6 @@ export default function App() {
               <option value="unknown">unknown</option>
             </select>
 
-            <label>{t.sourceFilter}</label>
-            <select value={sourceType} onChange={(e) => setSourceType(e.target.value)}>
-              <option value="">{t.all}</option>
-              <option value="source-feed">source-feed</option>
-              <option value="search-news">search-news</option>
-            </select>
-
             <label>Map Level</label>
             <select value={viewLevel} onChange={(e) => setViewLevel(e.target.value)}>
               <option value="country">Country</option>
@@ -245,6 +245,7 @@ export default function App() {
         >
           <Source id="cities" type="geojson" data={geojson}>
             <Layer {...heatLayer} />
+            <Layer {...glowLayer} />
             <Layer {...pointLayer} />
           </Source>
 
