@@ -3,112 +3,38 @@ import axios from 'axios';
 import Map, { Layer, Source, Popup } from 'react-map-gl/maplibre';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8080/api';
-
-const THEMES = {
-  dark: {
-    mapStyle: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
-    appClass: 'theme-dark'
-  },
-  light: {
-    mapStyle: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-    appClass: 'theme-light'
-  },
-  neon: {
-    mapStyle: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
-    appClass: 'theme-neon'
-  }
-};
-
-const I18N = {
-  zh: {
-    title: 'Robot City Atlas',
-    subtitle: '全球机器人部署可视化',
-    refresh: '刷新地图',
-    robotFilter: '机器人类型',
-    sourceFilter: '来源类型',
-    all: '全部',
-    cityCoverage: '覆盖城市',
-    events: '标准事件',
-    facts: '抽取事实',
-    raws: '原始来源',
-    eventCount: '事件数',
-    sourceCount: '来源数',
-    dataOps: '数据维护（后台）',
-    keyword: '关键词',
-    limit: '抓取条数',
-    crawl: '关键词抓取',
-    crawlCompany: '公司池抓取',
-    crawlFeed: '来源抓取',
-    running: '执行中...'
-  },
-  en: {
-    title: 'Robot City Atlas',
-    subtitle: 'Global robot deployment map',
-    refresh: 'Refresh',
-    robotFilter: 'Robot Type',
-    sourceFilter: 'Source Type',
-    all: 'All',
-    cityCoverage: 'Cities',
-    events: 'Canonical Events',
-    facts: 'Extracted Facts',
-    raws: 'Raw Articles',
-    eventCount: 'Events',
-    sourceCount: 'Sources',
-    dataOps: 'Data Operations',
-    keyword: 'Keyword',
-    limit: 'Fetch limit',
-    crawl: 'Keyword crawl',
-    crawlCompany: 'Company crawl',
-    crawlFeed: 'Feed crawl',
-    running: 'Running...'
-  },
-  es: {
-    title: 'Atlas de Ciudades Robot', subtitle: 'Mapa global de despliegue robótico', refresh: 'Actualizar', robotFilter: 'Tipo de robot', sourceFilter: 'Tipo de fuente', all: 'Todos', cityCoverage: 'Ciudades', events: 'Eventos', facts: 'Hechos', raws: 'Fuentes', eventCount: 'Eventos', sourceCount: 'Fuentes', dataOps: 'Operaciones de datos', keyword: 'Palabra clave', limit: 'Límite', crawl: 'Rastreo por palabra', crawlCompany: 'Rastreo por empresa', crawlFeed: 'Rastreo RSS', running: 'Ejecutando...'
-  },
-  fr: {
-    title: 'Atlas Robot des Villes', subtitle: 'Carte mondiale des déploiements', refresh: 'Actualiser', robotFilter: 'Type de robot', sourceFilter: 'Type de source', all: 'Tous', cityCoverage: 'Villes', events: 'Événements', facts: 'Faits', raws: 'Sources', eventCount: 'Événements', sourceCount: 'Sources', dataOps: 'Opérations de données', keyword: 'Mot-clé', limit: 'Limite', crawl: 'Collecte par mot-clé', crawlCompany: 'Collecte entreprises', crawlFeed: 'Collecte RSS', running: 'En cours...'
-  },
-  ja: {
-    title: 'ロボット都市アトラス', subtitle: '世界ロボット展開マップ', refresh: '更新', robotFilter: 'ロボット種類', sourceFilter: 'ソース種類', all: 'すべて', cityCoverage: '都市数', events: 'イベント', facts: '抽出ファクト', raws: '生ソース', eventCount: 'イベント数', sourceCount: 'ソース数', dataOps: 'データ運用', keyword: 'キーワード', limit: '件数', crawl: 'キーワード収集', crawlCompany: '企業収集', crawlFeed: 'RSS収集', running: '実行中...'
-  }
-};
+const MAP_STYLE = 'https://basemaps.cartocdn.com/gl/dark-matter-nolabels-gl-style/style.json';
 
 export default function App() {
-  const [lang, setLang] = useState('zh');
-  const [theme, setTheme] = useState('dark');
-  const t = I18N[lang] || I18N.zh;
-
   const [geojson, setGeojson] = useState({ type: 'FeatureCollection', features: [] });
   const [selected, setSelected] = useState(null);
   const [robotType, setRobotType] = useState('');
+  const [continent, setContinent] = useState('');
+  const [cityKeyword, setCityKeyword] = useState('');
   const [cityItems, setCityItems] = useState([]);
   const [collapsed, setCollapsed] = useState(false);
-  const [viewLevel, setViewLevel] = useState('city');
-  const [stats, setStats] = useState({ rawArticles: 0, extractedFacts: 0, canonicalEvents: 0, totalCities: 0, byRobotType: [] });
+  const [zoom, setZoom] = useState(1.4);
+  const [stats, setStats] = useState({ canonicalEvents: 0, totalCities: 0 });
+
+  const mapLevel = zoom < 3 ? 'country' : zoom < 6 ? 'province' : 'city';
 
   const heatLayer = useMemo(() => ({
     id: 'city-heat',
     type: 'heatmap',
     paint: {
       'heatmap-weight': ['interpolate', ['linear'], ['get', 'eventCount'], 1, 0.2, 30, 1],
-      'heatmap-intensity': 0.8,
-      'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 20, 6, 28, 12, 36],
+      'heatmap-intensity': 0.85,
+      'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 22, 6, 30, 12, 40],
       'heatmap-color': [
         'interpolate', ['linear'], ['heatmap-density'],
-        0, 'rgba(33,102,172,0)',
-        0.2, '#2ec7ff',
-        0.4, '#4fffb0',
-        0.6, '#ffe66d',
-        0.8, '#ff7b54',
-        1, '#ff3d71'
+        0, 'rgba(33,102,172,0)', 0.2, '#2ec7ff', 0.4, '#4fffb0', 0.6, '#ffe66d', 0.8, '#ff7b54', 1, '#ff3d71'
       ],
-      'heatmap-opacity': 0.55
+      'heatmap-opacity': 0.65
     }
   }), []);
 
   const glowLayer = useMemo(() => ({
-    id: 'city-glow',
-    type: 'circle',
+    id: 'city-glow', type: 'circle',
     paint: {
       'circle-color': '#5fd8ff',
       'circle-radius': ['interpolate', ['linear'], ['get', 'eventCount'], 1, 10, 10, 16, 30, 24],
@@ -129,21 +55,25 @@ export default function App() {
     }
   }), []);
 
-  async function loadCities(level = viewLevel) {
+  async function loadCities(level = mapLevel) {
     const [citiesRes, statsRes] = await Promise.all([
       axios.get(`${API_BASE}/map/regions`, { params: { level } }),
       axios.get(`${API_BASE}/stats`)
     ]);
-    setGeojson(citiesRes.data);
-    setStats(statsRes.data);
+
+    let features = citiesRes.data.features || [];
+    if (continent) features = features.filter((f) => f.properties.continent === continent);
+    if (cityKeyword.trim()) {
+      const q = cityKeyword.trim().toLowerCase();
+      features = features.filter((f) => String(f.properties.label || '').toLowerCase().includes(q));
+    }
+
+    setGeojson({ type: 'FeatureCollection', features });
+    setStats(statsRes.data || {});
   }
 
   async function loadRegionItems(props) {
-    const params = {
-      robotType: robotType || undefined,
-      limit: 30
-    };
-
+    const params = { robotType: robotType || undefined, limit: 50 };
     if (props.level === 'country') params.country = props.country;
     else if (props.level === 'province') {
       params.country = props.country;
@@ -159,58 +89,50 @@ export default function App() {
   }
 
   useEffect(() => {
-    loadCities(viewLevel);
-  }, [viewLevel]);
-
+    loadCities(mapLevel);
+  }, [mapLevel, continent, cityKeyword]);
 
   return (
-    <div className={`layout ${THEMES[theme].appClass}`} style={{ gridTemplateColumns: collapsed ? '46px 1fr' : '360px 1fr' }}>
+    <div className="layout" style={{ gridTemplateColumns: collapsed ? '46px 1fr' : '360px 1fr' }}>
       <aside className={`panel ${collapsed ? 'collapsed' : ''}`}>
         <button className="collapseBtn" onClick={() => setCollapsed(!collapsed)}>{collapsed ? '⟩' : '⟨'}</button>
 
         {!collapsed && (
           <>
-            <div className="topRow">
-              <h2>{t.title}</h2>
-              <div className="miniControls">
-                <select value={lang} onChange={(e) => setLang(e.target.value)}>
-                  <option value="zh">中文</option>
-                  <option value="en">English</option>
-                  <option value="es">Español</option>
-                  <option value="fr">Français</option>
-                  <option value="ja">日本語</option>
-                </select>
-                <select value={theme} onChange={(e) => setTheme(e.target.value)}>
-                  <option value="dark">Dark</option>
-                  <option value="light">Light</option>
-                  <option value="neon">Neon</option>
-                </select>
-              </div>
-            </div>
-            <p>{t.subtitle}</p>
+            <h2>Global Robot City Atlas</h2>
+            <p>全球每个城市机器人数量可视化</p>
 
-            <label>{t.robotFilter}</label>
+            <div className="stats">
+              <div>全球机器人事件：{stats.canonicalEvents || 0}</div>
+              <div>覆盖城市：{stats.totalCities || 0}</div>
+              <div>当前地图级别：{mapLevel}</div>
+            </div>
+
+            <label>洲（Continent）</label>
+            <select value={continent} onChange={(e) => setContinent(e.target.value)}>
+              <option value="">全部</option>
+              <option value="Asia">Asia</option>
+              <option value="Europe">Europe</option>
+              <option value="North America">North America</option>
+              <option value="South America">South America</option>
+              <option value="Oceania">Oceania</option>
+              <option value="Africa">Africa</option>
+              <option value="Other">Other</option>
+            </select>
+
+            <label>城市关键词</label>
+            <input value={cityKeyword} onChange={(e) => setCityKeyword(e.target.value)} placeholder="例如: Shanghai / Toronto" />
+
+            <label>机器人类型</label>
             <select value={robotType} onChange={(e) => setRobotType(e.target.value)}>
-              <option value="">{t.all}</option>
+              <option value="">全部</option>
               <option value="robotaxi">robotaxi</option>
               <option value="delivery">delivery</option>
               <option value="warehouse">warehouse</option>
               <option value="unknown">unknown</option>
             </select>
 
-            <label>Map Level</label>
-            <select value={viewLevel} onChange={(e) => setViewLevel(e.target.value)}>
-              <option value="country">Country</option>
-              <option value="province">Province/State</option>
-              <option value="city">City</option>
-            </select>
-
-            <button onClick={() => loadCities(viewLevel)}>{t.refresh}</button>
-
-            <div className="stats">
-              <div>{t.cityCoverage}: {stats.totalCities}</div>
-              <div>{t.events}: {stats.canonicalEvents}</div>
-            </div>
+            <button onClick={() => loadCities(mapLevel)}>刷新数据</button>
 
             {selected?.properties?.label && (
               <div className="cityPanel">
@@ -219,8 +141,7 @@ export default function App() {
                   {cityItems.map((item) => (
                     <li key={item._id}>
                       <div><strong>{item.companyCanonical || item.company}</strong> · {item.robotType} · {item.eventType}</div>
-                      <div>{t.sourceCount}: {item.sourceCount} · confidence: {Number(item.confidence || 0).toFixed(2)}</div>
-                      {item.sourceUrls?.[0] && <a href={item.sourceUrls[0]} target="_blank" rel="noreferrer">source</a>}
+                      <div>sources: {item.sourceCount} · confidence: {Number(item.confidence || 0).toFixed(2)}</div>
                     </li>
                   ))}
                 </ul>
@@ -233,7 +154,8 @@ export default function App() {
       <main className="mapWrap">
         <Map
           initialViewState={{ longitude: 20, latitude: 20, zoom: 1.4 }}
-          mapStyle={THEMES[theme].mapStyle}
+          mapStyle={MAP_STYLE}
+          onMoveEnd={(e) => setZoom(e.viewState.zoom)}
           onClick={(e) => {
             const f = e.features?.[0];
             if (f?.properties) {
@@ -258,8 +180,8 @@ export default function App() {
             >
               <div>
                 <strong>{selected.properties.label}</strong>
-                <div>{t.eventCount}: {selected.properties.eventCount}</div>
-                <div>{t.sourceCount}: {selected.properties.sourceCount}</div>
+                <div>robots/events: {selected.properties.eventCount}</div>
+                <div>sources: {selected.properties.sourceCount}</div>
               </div>
             </Popup>
           )}

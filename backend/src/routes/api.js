@@ -4,6 +4,25 @@ import { RawArticle } from '../models/RawArticle.js';
 import { ExtractedFact } from '../models/ExtractedFact.js';
 import { CanonicalEvent } from '../models/CanonicalEvent.js';
 
+const countryToContinent = {
+  CN: 'Asia', US: 'North America', CA: 'North America', MX: 'North America',
+  GB: 'Europe', FR: 'Europe', DE: 'Europe', ES: 'Europe', IT: 'Europe', NL: 'Europe',
+  JP: 'Asia', KR: 'Asia', SG: 'Asia', IN: 'Asia', AE: 'Asia', SA: 'Asia',
+  AU: 'Oceania', NZ: 'Oceania',
+  BR: 'South America', AR: 'South America', CL: 'South America',
+  ZA: 'Africa', EG: 'Africa', NG: 'Africa'
+};
+
+function continentOf(country) {
+  return countryToContinent[country] || 'Other';
+}
+
+function countriesForContinent(continent) {
+  return Object.entries(countryToContinent)
+    .filter(([, c]) => c === continent)
+    .map(([code]) => code);
+}
+
 export const apiRouter = Router();
 
 apiRouter.get('/health', (_, res) => {
@@ -26,11 +45,15 @@ apiRouter.get('/stats', async (_, res) => {
 });
 
 apiRouter.get('/events', async (req, res) => {
-  const { city, province, country, robotType, eventType, company, limit = 100 } = req.query;
+  const { city, province, country, continent, robotType, eventType, company, limit = 100 } = req.query;
   const filter = {};
   if (city) filter.city = city;
   if (province) filter.province = province;
   if (country) filter.country = country;
+  if (continent) {
+    const codes = countriesForContinent(continent);
+    filter.country = { $in: codes.length ? codes : ['__none__'] };
+  }
   if (robotType) filter.robotType = robotType;
   if (eventType) filter.eventType = eventType;
   if (company) filter.companyCanonical = company;
@@ -67,6 +90,7 @@ apiRouter.get('/map/regions', async (req, res) => {
     const province = r._id.province || null;
     const country = r._id.country || null;
     const label = level === 'country' ? country : level === 'province' ? `${province}, ${country}` : `${city}, ${province}`;
+    const continent = continentOf(country);
 
     return {
       type: 'Feature',
@@ -77,6 +101,7 @@ apiRouter.get('/map/regions', async (req, res) => {
         city,
         province,
         country,
+        continent,
         cityCanonical: r._id.cityCanonical || null,
         eventCount: r.count,
         sourceCount: r.sourceCount,
