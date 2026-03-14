@@ -61,6 +61,15 @@ const I18N = {
     crawlCompany: 'Company crawl',
     crawlFeed: 'Feed crawl',
     running: 'Running...'
+  },
+  es: {
+    title: 'Atlas de Ciudades Robot', subtitle: 'Mapa global de despliegue robótico', refresh: 'Actualizar', robotFilter: 'Tipo de robot', sourceFilter: 'Tipo de fuente', all: 'Todos', cityCoverage: 'Ciudades', events: 'Eventos', facts: 'Hechos', raws: 'Fuentes', eventCount: 'Eventos', sourceCount: 'Fuentes', dataOps: 'Operaciones de datos', keyword: 'Palabra clave', limit: 'Límite', crawl: 'Rastreo por palabra', crawlCompany: 'Rastreo por empresa', crawlFeed: 'Rastreo RSS', running: 'Ejecutando...'
+  },
+  fr: {
+    title: 'Atlas Robot des Villes', subtitle: 'Carte mondiale des déploiements', refresh: 'Actualiser', robotFilter: 'Type de robot', sourceFilter: 'Type de source', all: 'Tous', cityCoverage: 'Villes', events: 'Événements', facts: 'Faits', raws: 'Sources', eventCount: 'Événements', sourceCount: 'Sources', dataOps: 'Opérations de données', keyword: 'Mot-clé', limit: 'Limite', crawl: 'Collecte par mot-clé', crawlCompany: 'Collecte entreprises', crawlFeed: 'Collecte RSS', running: 'En cours...'
+  },
+  ja: {
+    title: 'ロボット都市アトラス', subtitle: '世界ロボット展開マップ', refresh: '更新', robotFilter: 'ロボット種類', sourceFilter: 'ソース種類', all: 'すべて', cityCoverage: '都市数', events: 'イベント', facts: '抽出ファクト', raws: '生ソース', eventCount: 'イベント数', sourceCount: 'ソース数', dataOps: 'データ運用', keyword: 'キーワード', limit: '件数', crawl: 'キーワード収集', crawlCompany: '企業収集', crawlFeed: 'RSS収集', running: '実行中...'
   }
 };
 
@@ -180,6 +189,9 @@ export default function App() {
             <select value={lang} onChange={(e) => setLang(e.target.value)}>
               <option value="zh">中文</option>
               <option value="en">English</option>
+              <option value="es">Español</option>
+              <option value="fr">Français</option>
+              <option value="ja">日本語</option>
             </select>
             <select value={theme} onChange={(e) => setTheme(e.target.value)}>
               <option value="dark">Dark</option>
