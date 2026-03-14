@@ -5,10 +5,10 @@ const RawItemSchema = new mongoose.Schema(
     query: { type: String, index: true },
     source: { type: String, default: 'search' },
     sourceUrl: { type: String, required: true },
-    normalizedUrl: { type: String, required: true, index: true },
+    normalizedUrl: { type: String, required: true },
     title: String,
     snippet: String,
-    contentHash: { type: String, required: true, index: true },
+    contentHash: { type: String, required: true },
     city: { type: String, default: 'Unknown', index: true },
     country: { type: String, default: 'Unknown', index: true },
     location: {

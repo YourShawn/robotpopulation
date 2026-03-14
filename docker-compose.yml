@@ -1,5 +1,12 @@
-version: '3.9'
 services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - '27018:27017'
+    volumes:
+      - mongo_data:/data/db
+
   backend:
     build:
       context: ./backend
@@ -8,14 +15,23 @@ services:
       - '8080:8080'
     env_file:
       - ./backend/.env
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/robot_map
+    depends_on:
+      - mongo
     restart: unless-stopped
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_BASE: http://142.171.156.25:8080/api
     ports:
       - '5173:80'
     depends_on:
       - backend
     restart: unless-stopped
+
+volumes:
+  mongo_data:

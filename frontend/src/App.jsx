@@ -12,6 +12,7 @@ export default function App() {
   const [crawlLimit, setCrawlLimit] = useState(20);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
+  const [robotType, setRobotType] = useState('');
   const [cityItems, setCityItems] = useState([]);
   const [stats, setStats] = useState({ totalItems: 0, totalCities: 0, byRobotType: [] });
 
@@ -40,8 +41,22 @@ export default function App() {
   }
 
   async function loadCityItems(city) {
-    const { data } = await axios.get(`${API_BASE}/items`, { params: { city, limit: 20 } });
+    const { data } = await axios.get(`${API_BASE}/items`, { params: { city, robotType: robotType || undefined, limit: 20 } });
     setCityItems(data.data || []);
+  }
+
+  async function runCompanyCrawl() {
+    try {
+      setLoading(true);
+      setMsg('正在跑公司来源池抓取...');
+      const { data } = await axios.post(`${API_BASE}/crawl/companies`, { perSourceLimit: 6 });
+      setMsg(`公司池抓取完成：新增 ${data.summary.inserted}，重复URL ${data.summary.duplicateUrl}`);
+      await loadCities();
+    } catch (e) {
+      setMsg(`失败：${e.response?.data?.error || e.message}`);
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -73,7 +88,17 @@ export default function App() {
         <label>抓取条数</label>
         <input type="number" min={5} max={50} value={crawlLimit} onChange={(e) => setCrawlLimit(e.target.value)} />
 
-        <button onClick={runCrawl} disabled={loading}>{loading ? '抓取中...' : '开始抓取'}</button>
+        <label>机器人类型筛选</label>
+        <select value={robotType} onChange={(e) => setRobotType(e.target.value)}>
+          <option value="">全部</option>
+          <option value="robotaxi">robotaxi</option>
+          <option value="delivery">delivery</option>
+          <option value="warehouse">warehouse</option>
+          <option value="unknown">unknown</option>
+        </select>
+
+        <button onClick={runCrawl} disabled={loading}>{loading ? '抓取中...' : '关键词抓取'}</button>
+        <button onClick={runCompanyCrawl} disabled={loading}>{loading ? '抓取中...' : '公司池抓取(P0)'} </button>
         <button onClick={loadCities}>刷新地图</button>
         <p className="msg">{msg}</p>
 
