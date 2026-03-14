@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import Map, { Layer, Source, Popup } from 'react-map-gl/maplibre';
 
@@ -18,6 +18,8 @@ export default function App() {
   const [lang, setLang] = useState('zh');
   const [theme, setTheme] = useState('dark');
   const t = I18N[lang] || I18N.zh;
+
+  const mapRef = useRef(null);
 
   const [geojson, setGeojson] = useState({ type: 'FeatureCollection', features: [] });
   const [selected, setSelected] = useState(null);
@@ -105,6 +107,13 @@ export default function App() {
     loadCities(mapLevel);
   }, [mapLevel, continent, cityKeyword]);
 
+  useEffect(() => {
+    const t = setTimeout(() => {
+      mapRef.current?.getMap?.().resize?.();
+    }, 120);
+    return () => clearTimeout(t);
+  }, [collapsed]);
+
   return (
     <div className="layout" style={{ gridTemplateColumns: collapsed ? '46px 1fr' : '360px 1fr' }}>
       <aside className={`panel ${collapsed ? 'collapsed' : ''}`}>
@@ -179,6 +188,7 @@ export default function App() {
 
       <main className="mapWrap">
         <Map
+          ref={mapRef}
           initialViewState={{ longitude: 20, latitude: 20, zoom: 1.4 }}
           mapStyle={THEMES[theme]}
           onMoveEnd={(e) => setZoom(e.viewState.zoom)}
