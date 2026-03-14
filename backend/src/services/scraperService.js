@@ -5,6 +5,7 @@ import { geocodeCity } from './geocodeService.js';
 import { normalizeUrl } from '../utils/dedupe.js';
 import { cityDictionary } from '../config/cityDictionary.js';
 import { companySeeds } from '../config/companySeeds.js';
+import { companySourcesSeed } from '../config/companySourcesSeed.js';
 import { RawArticle } from '../models/RawArticle.js';
 import { ExtractedFact } from '../models/ExtractedFact.js';
 import { CanonicalEvent } from '../models/CanonicalEvent.js';
@@ -80,7 +81,7 @@ function monthKey(d = new Date()) {
   return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, '0')}`;
 }
 
-async function persistRows(rows, { query, sourceSite, sourceType, userAgent, requestDelayMs = 600 }) {
+export async function persistRows(rows, { query, sourceSite, sourceType, userAgent, requestDelayMs = 600 }) {
   const batchId = randomUUID();
   let rawSaved = 0;
   let factsSaved = 0;
@@ -227,6 +228,68 @@ export async function crawlFeedSources({ userAgent, perFeedLimit = 10, requestDe
     }
   }
   return { feeds: details.length, details };
+}
+
+async function fetchRowsByStrategy(source, userAgent, limit = 8) {
+  if (source.crawl_strategy === 'rss') {
+    const { data: xml } = await axios.get(source.url, { headers: { 'User-Agent': userAgent }, timeout: 15000 });
+    const $xml = cheerio.load(xml, { xmlMode: true });
+    const rows = [];
+    $xml('item').each((_, el) => {
+      if (rows.length >= limit) return;
+      rows.push({
+        title: $xml(el).find('title').first().text().trim(),
+        sourceUrl: $xml(el).find('link').first().text().trim(),
+        snippet: $xml(el).find('description').first().text().replace(/<[^>]+>/g, ' ').trim(),
+        publishedAt: $xml(el).find('pubDate').first().text().trim(),
+        company: source.company_slug
+      });
+    });
+    return rows;
+  }
+
+  const { data: html } = await axios.get(source.url, { headers: { 'User-Agent': userAgent }, timeout: 20000 });
+  const $ = cheerio.load(html);
+
+  if (source.crawl_strategy === 'list_page' || source.crawl_strategy === 'structured_list') {
+    const rows = [];
+    $('a').each((_, el) => {
+      if (rows.length >= limit) return;
+      const href = $(el).attr('href');
+      const text = $(el).text().trim();
+      if (!href || !text || text.length < 10) return;
+      const url = href.startsWith('http') ? href : new URL(href, source.url).toString();
+      rows.push({ title: text.slice(0, 180), sourceUrl: url, snippet: `${source.source_type} ${text}`.slice(0, 300), company: source.company_slug });
+    });
+    if (rows.length) return rows;
+  }
+
+  const title = $('title').first().text().trim() || `${source.company_slug} ${source.source_type}`;
+  const body = $('body').text().replace(/\s+/g, ' ').trim().slice(0, 600);
+  return [{ title, sourceUrl: source.url, snippet: body, company: source.company_slug }];
+}
+
+export async function crawlCompanyRegistrySources({ userAgent, requestDelayMs = 700, perSourceLimit = 8 }) {
+  const details = [];
+  const activeSources = companySourcesSeed.filter((s) => s.active);
+
+  for (const source of activeSources) {
+    try {
+      const rows = await fetchRowsByStrategy(source, userAgent, perSourceLimit);
+      const result = await persistRows(rows, {
+        query: `${source.company_slug}:${source.source_type}`,
+        sourceSite: source.company_slug,
+        sourceType: source.source_type,
+        userAgent,
+        requestDelayMs
+      });
+      details.push({ source: `${source.company_slug}/${source.source_type}`, strategy: source.crawl_strategy, ...result });
+    } catch (error) {
+      details.push({ source: `${source.company_slug}/${source.source_type}`, strategy: source.crawl_strategy, scanned: 0, rawSaved: 0, factsSaved: 0, eventsMerged: 0, error: error.message });
+    }
+  }
+
+  return { sources: activeSources.length, details };
 }
 
 export async function crawlCompanySources({ userAgent, perSourceLimit = 6, requestDelayMs = 700 }) {

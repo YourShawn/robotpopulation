@@ -1,0 +1,16 @@
+[
+  {"company_slug":"waymo","source_type":"faq","url":"https://waymo.com/faq","crawl_strategy":"static_html","active":true},
+  {"company_slug":"waymo","source_type":"blog","url":"https://waymo.com/blog","crawl_strategy":"list_page","active":true},
+  {"company_slug":"waymo","source_type":"permit","url":"https://www.dmv.ca.gov/portal/vehicle-industry-services/autonomous-vehicles","crawl_strategy":"structured_table","active":true},
+  {"company_slug":"starship-technologies","source_type":"campuses","url":"https://www.starship.xyz/university-campuses/","crawl_strategy":"structured_list","active":true},
+  {"company_slug":"starship-technologies","source_type":"press","url":"https://www.starship.xyz/press/","crawl_strategy":"list_page","active":true},
+  {"company_slug":"serve-robotics","source_type":"investor_news","url":"https://investors.serverobotics.com/news","crawl_strategy":"list_page","active":true},
+  {"company_slug":"serve-robotics","source_type":"news","url":"https://serve.co/news","crawl_strategy":"list_page","active":true},
+  {"company_slug":"nuro","source_type":"blog","url":"https://www.nuro.ai/blog","crawl_strategy":"list_page","active":true},
+  {"company_slug":"kiwibot","source_type":"blog","url":"https://www.kiwibot.com/blog","crawl_strategy":"list_page","active":true},
+  {"company_slug":"coco-robotics","source_type":"blog","url":"https://www.cocodelivery.com/blog","crawl_strategy":"list_page","active":true},
+  {"company_slug":"zoox","source_type":"news","url":"https://zoox.com/news/","crawl_strategy":"list_page","active":true},
+  {"company_slug":"pony-ai","source_type":"news","url":"https://pony.ai/news/","crawl_strategy":"list_page","active":true},
+  {"company_slug":"weride","source_type":"news","url":"https://www.weride.ai/news","crawl_strategy":"list_page","active":true},
+  {"company_slug":"autox","source_type":"blog","url":"https://www.autox.ai/blog","crawl_strategy":"list_page","active":true}
+]

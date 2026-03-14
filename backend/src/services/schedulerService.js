@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import { crawlFeedSources, crawlCompanySources } from './scraperService.js';
+import { crawlFeedSources, crawlCompanyRegistrySources } from './scraperService.js';
 
 export function startScheduler() {
   const schedule = process.env.CRAWL_CRON || '0 3 * * *'; // daily 03:00
@@ -10,10 +10,10 @@ export function startScheduler() {
     try {
       console.log('[scheduler] daily crawl started');
       const feedResult = await crawlFeedSources({ userAgent, perFeedLimit: 20, requestDelayMs: delay });
-      const companyResult = await crawlCompanySources({ userAgent, perSourceLimit: 10, requestDelayMs: delay });
+      const companyResult = await crawlCompanyRegistrySources({ userAgent, perSourceLimit: 10, requestDelayMs: delay });
       console.log('[scheduler] daily crawl done', {
         feedSources: feedResult.feeds,
-        companies: companyResult.companies
+        companySources: companyResult.sources
       });
     } catch (e) {
       console.error('[scheduler] crawl failed:', e.message);
@@ -25,7 +25,7 @@ export function startScheduler() {
       try {
         console.log('[scheduler] startup crawl started');
         await crawlFeedSources({ userAgent, perFeedLimit: 8, requestDelayMs: delay });
-        await crawlCompanySources({ userAgent, perSourceLimit: 4, requestDelayMs: delay });
+        await crawlCompanyRegistrySources({ userAgent, perSourceLimit: 4, requestDelayMs: delay });
         console.log('[scheduler] startup crawl done');
       } catch (e) {
         console.error('[scheduler] startup crawl failed:', e.message);
