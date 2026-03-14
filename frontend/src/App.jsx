@@ -3,83 +3,127 @@ import axios from 'axios';
 import Map, { Layer, Source, Popup } from 'react-map-gl/maplibre';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8080/api';
-const TILE_STYLE = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
+
+const THEMES = {
+  dark: {
+    mapStyle: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+    appClass: 'theme-dark'
+  },
+  light: {
+    mapStyle: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+    appClass: 'theme-light'
+  },
+  neon: {
+    mapStyle: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
+    appClass: 'theme-neon'
+  }
+};
+
+const I18N = {
+  zh: {
+    title: 'Robot City Atlas',
+    subtitle: '全球机器人部署地图',
+    refresh: '刷新地图',
+    robotFilter: '机器人类型',
+    sourceFilter: '来源类型',
+    all: '全部',
+    cityCoverage: '覆盖城市',
+    events: '标准事件',
+    facts: '抽取事实',
+    raws: '原始来源',
+    eventCount: '事件数',
+    sourceCount: '来源数',
+    dataOps: '数据维护（后台）',
+    keyword: '关键词',
+    limit: '抓取条数',
+    crawl: '关键词抓取',
+    crawlCompany: '公司池抓取',
+    crawlFeed: '来源抓取',
+    running: '执行中...'
+  },
+  en: {
+    title: 'Robot City Atlas',
+    subtitle: 'Global robot deployment map',
+    refresh: 'Refresh',
+    robotFilter: 'Robot Type',
+    sourceFilter: 'Source Type',
+    all: 'All',
+    cityCoverage: 'Cities',
+    events: 'Canonical Events',
+    facts: 'Extracted Facts',
+    raws: 'Raw Articles',
+    eventCount: 'Events',
+    sourceCount: 'Sources',
+    dataOps: 'Data Operations',
+    keyword: 'Keyword',
+    limit: 'Fetch limit',
+    crawl: 'Keyword crawl',
+    crawlCompany: 'Company crawl',
+    crawlFeed: 'Feed crawl',
+    running: 'Running...'
+  }
+};
 
 export default function App() {
+  const [lang, setLang] = useState('zh');
+  const [theme, setTheme] = useState('dark');
+  const t = I18N[lang] || I18N.zh;
+
   const [geojson, setGeojson] = useState({ type: 'FeatureCollection', features: [] });
   const [selected, setSelected] = useState(null);
-  const [query, setQuery] = useState('AI startup Toronto');
+  const [query, setQuery] = useState('robotaxi launch city');
   const [crawlLimit, setCrawlLimit] = useState(20);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
   const [robotType, setRobotType] = useState('');
   const [sourceType, setSourceType] = useState('');
   const [cityItems, setCityItems] = useState([]);
+  const [showOps, setShowOps] = useState(false);
   const [stats, setStats] = useState({ rawArticles: 0, extractedFacts: 0, canonicalEvents: 0, totalCities: 0, byRobotType: [] });
 
-  const pointLayer = useMemo(
-    () => ({
-      id: 'city-points',
-      type: 'circle',
-      paint: {
-        'circle-color': '#00e5ff',
-        'circle-radius': ['interpolate', ['linear'], ['get', 'count'], 1, 5, 50, 20],
-        'circle-opacity': 0.8,
-        'circle-stroke-width': 1,
-        'circle-stroke-color': '#b2ffff'
-      }
-    }),
-    []
-  );
+  const heatLayer = useMemo(() => ({
+    id: 'city-heat',
+    type: 'heatmap',
+    paint: {
+      'heatmap-weight': ['interpolate', ['linear'], ['get', 'eventCount'], 1, 0.2, 30, 1],
+      'heatmap-intensity': 0.8,
+      'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 20, 6, 28, 12, 36],
+      'heatmap-color': [
+        'interpolate', ['linear'], ['heatmap-density'],
+        0, 'rgba(33,102,172,0)',
+        0.2, '#2ec7ff',
+        0.4, '#4fffb0',
+        0.6, '#ffe66d',
+        0.8, '#ff7b54',
+        1, '#ff3d71'
+      ],
+      'heatmap-opacity': 0.55
+    }
+  }), []);
+
+  const pointLayer = useMemo(() => ({
+    id: 'city-points',
+    type: 'circle',
+    paint: {
+      'circle-color': ['interpolate', ['linear'], ['get', 'eventCount'], 1, '#59d8ff', 10, '#35ffb6', 25, '#ffcd4a', 50, '#ff6b6b'],
+      'circle-radius': ['interpolate', ['linear'], ['get', 'eventCount'], 1, 4, 5, 7, 20, 12, 50, 20],
+      'circle-opacity': 0.95,
+      'circle-stroke-width': 1.2,
+      'circle-stroke-color': '#eaffff'
+    }
+  }), []);
 
   async function loadCities() {
-    const [citiesRes, statsRes] = await Promise.all([
-      axios.get(`${API_BASE}/map/cities`),
-      axios.get(`${API_BASE}/stats`)
-    ]);
+    const [citiesRes, statsRes] = await Promise.all([axios.get(`${API_BASE}/map/cities`), axios.get(`${API_BASE}/stats`)]);
     setGeojson(citiesRes.data);
     setStats(statsRes.data);
   }
 
   async function loadCityItems(city) {
     const { data } = await axios.get(`${API_BASE}/events`, {
-      params: {
-        city,
-        robotType: robotType || undefined,
-        limit: 20
-      }
+      params: { city, robotType: robotType || undefined, sourceType: sourceType || undefined, limit: 30 }
     });
     setCityItems(data.data || []);
-  }
-
-  async function runFeedCrawl() {
-    try {
-      setLoading(true);
-      setMsg('正在跑核心来源 RSS 抓取...');
-      const { data } = await axios.post(`${API_BASE}/crawl/feeds`, { perFeedLimit: 8 });
-      const total = data.details?.reduce((n, x) => n + (x.eventsMerged || 0), 0) || 0;
-      setMsg(`来源抓取完成：事件合并 ${total}`);
-      await loadCities();
-    } catch (e) {
-      setMsg(`失败：${e.response?.data?.error || e.message}`);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function runCompanyCrawl() {
-    try {
-      setLoading(true);
-      setMsg('正在跑公司来源池抓取...');
-      const { data } = await axios.post(`${API_BASE}/crawl/companies`, { perSourceLimit: 6 });
-      const total = data.details?.reduce((n, x) => n + (x.eventsMerged || 0), 0) || 0;
-      setMsg(`公司池抓取完成：事件合并 ${total}`);
-      await loadCities();
-    } catch (e) {
-      setMsg(`失败：${e.response?.data?.error || e.message}`);
-    } finally {
-      setLoading(false);
-    }
   }
 
   useEffect(() => {
@@ -87,68 +131,113 @@ export default function App() {
   }, []);
 
   async function runCrawl() {
+    setLoading(true);
     try {
-      setLoading(true);
-      setMsg('正在抓取并去重...');
       const { data } = await axios.post(`${API_BASE}/crawl`, { query, limit: Number(crawlLimit) });
-      setMsg(`完成：原始 ${data.rawSaved}，事实 ${data.factsSaved}，事件合并 ${data.eventsMerged}`);
+      setMsg(`OK: ${data.eventsMerged || 0} events merged`);
       await loadCities();
     } catch (e) {
-      setMsg(`失败：${e.response?.data?.error || e.message}`);
+      setMsg(`Error: ${e.response?.data?.error || e.message}`);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function runCompanyCrawl() {
+    setLoading(true);
+    try {
+      const { data } = await axios.post(`${API_BASE}/crawl/companies`, { perSourceLimit: 6 });
+      const total = data.details?.reduce((n, x) => n + (x.eventsMerged || 0), 0) || 0;
+      setMsg(`OK: ${total} events merged`);
+      await loadCities();
+    } catch (e) {
+      setMsg(`Error: ${e.response?.data?.error || e.message}`);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function runFeedCrawl() {
+    setLoading(true);
+    try {
+      const { data } = await axios.post(`${API_BASE}/crawl/feeds`, { perFeedLimit: 10 });
+      const total = data.details?.reduce((n, x) => n + (x.eventsMerged || 0), 0) || 0;
+      setMsg(`OK: ${total} events merged`);
+      await loadCities();
+    } catch (e) {
+      setMsg(`Error: ${e.response?.data?.error || e.message}`);
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="layout">
+    <div className={`layout ${THEMES[theme].appClass}`}>
       <aside className="panel">
-        <h2>Map Intel</h2>
-        <p>OSM 数据底图 · 深色科技风 · 城市聚合</p>
-        <label>搜索关键词</label>
-        <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="例如：fintech Singapore" />
+        <div className="topRow">
+          <h2>{t.title}</h2>
+          <div className="miniControls">
+            <select value={lang} onChange={(e) => setLang(e.target.value)}>
+              <option value="zh">中文</option>
+              <option value="en">English</option>
+            </select>
+            <select value={theme} onChange={(e) => setTheme(e.target.value)}>
+              <option value="dark">Dark</option>
+              <option value="light">Light</option>
+              <option value="neon">Neon</option>
+            </select>
+          </div>
+        </div>
+        <p>{t.subtitle}</p>
 
-        <label>抓取条数</label>
-        <input type="number" min={5} max={50} value={crawlLimit} onChange={(e) => setCrawlLimit(e.target.value)} />
-
-        <label>机器人类型筛选</label>
+        <label>{t.robotFilter}</label>
         <select value={robotType} onChange={(e) => setRobotType(e.target.value)}>
-          <option value="">全部</option>
+          <option value="">{t.all}</option>
           <option value="robotaxi">robotaxi</option>
           <option value="delivery">delivery</option>
           <option value="warehouse">warehouse</option>
           <option value="unknown">unknown</option>
         </select>
 
-        <label>来源类型筛选</label>
+        <label>{t.sourceFilter}</label>
         <select value={sourceType} onChange={(e) => setSourceType(e.target.value)}>
-          <option value="">全部</option>
+          <option value="">{t.all}</option>
           <option value="source-feed">source-feed</option>
           <option value="search-news">search-news</option>
         </select>
 
-        <button onClick={runCrawl} disabled={loading}>{loading ? '抓取中...' : '关键词抓取'}</button>
-        <button onClick={runCompanyCrawl} disabled={loading}>{loading ? '抓取中...' : '公司池抓取(P0)'}</button>
-        <button onClick={runFeedCrawl} disabled={loading}>{loading ? '抓取中...' : '核心来源抓取(RSS)'}</button>
-        <button onClick={loadCities}>刷新地图</button>
-        <p className="msg">{msg}</p>
+        <button onClick={loadCities}>{t.refresh}</button>
 
         <div className="stats">
-          <div>原始来源：{stats.rawArticles}</div>
-          <div>抽取事实：{stats.extractedFacts}</div>
-          <div>标准事件：{stats.canonicalEvents}</div>
-          <div>覆盖城市：{stats.totalCities}</div>
+          <div>{t.cityCoverage}: {stats.totalCities}</div>
+          <div>{t.events}: {stats.canonicalEvents}</div>
+          <div>{t.facts}: {stats.extractedFacts}</div>
+          <div>{t.raws}: {stats.rawArticles}</div>
         </div>
+
+        <button className="secondary" onClick={() => setShowOps(!showOps)}>{t.dataOps}</button>
+        {showOps && (
+          <div className="opsBox">
+            <label>{t.keyword}</label>
+            <input value={query} onChange={(e) => setQuery(e.target.value)} />
+            <label>{t.limit}</label>
+            <input type="number" min={5} max={80} value={crawlLimit} onChange={(e) => setCrawlLimit(e.target.value)} />
+            <button onClick={runCrawl} disabled={loading}>{loading ? t.running : t.crawl}</button>
+            <button onClick={runCompanyCrawl} disabled={loading}>{loading ? t.running : t.crawlCompany}</button>
+            <button onClick={runFeedCrawl} disabled={loading}>{loading ? t.running : t.crawlFeed}</button>
+          </div>
+        )}
+        <p className="msg">{msg}</p>
 
         {selected?.properties?.city && (
           <div className="cityPanel">
-            <h3>{selected.properties.city}</h3>
+            <h3>{selected.properties.city} · {selected.properties.province}</h3>
             <ul>
               {cityItems.map((item) => (
                 <li key={item._id}>
                   <div><strong>{item.companyCanonical || item.company}</strong> · {item.robotType} · {item.eventType}</div>
-                  <div>sources: {item.sourceCount} · confidence: {Number(item.confidence || 0).toFixed(2)}</div>
-                  {item.sourceUrls?.[0] && <a href={item.sourceUrls[0]} target="_blank" rel="noreferrer">查看主来源</a>}
+                  <div>{t.sourceCount}: {item.sourceCount} · confidence: {Number(item.confidence || 0).toFixed(2)}</div>
+                  {item.sourceUrls?.[0] && <a href={item.sourceUrls[0]} target="_blank" rel="noreferrer">source</a>}
                 </li>
               ))}
             </ul>
@@ -158,8 +247,8 @@ export default function App() {
 
       <main className="mapWrap">
         <Map
-          initialViewState={{ longitude: 20, latitude: 20, zoom: 1.5 }}
-          mapStyle={TILE_STYLE}
+          initialViewState={{ longitude: 20, latitude: 20, zoom: 1.4 }}
+          mapStyle={THEMES[theme].mapStyle}
           onClick={(e) => {
             const f = e.features?.[0];
             if (f?.properties) {
@@ -170,6 +259,7 @@ export default function App() {
           interactiveLayerIds={['city-points']}
         >
           <Source id="cities" type="geojson" data={geojson}>
+            <Layer {...heatLayer} />
             <Layer {...pointLayer} />
           </Source>
 
@@ -182,8 +272,8 @@ export default function App() {
             >
               <div>
                 <strong>{selected.properties.city}</strong>
-                <div>事件数：{selected.properties.eventCount}</div>
-                <div>来源数：{selected.properties.sourceCount}</div>
+                <div>{t.eventCount}: {selected.properties.eventCount}</div>
+                <div>{t.sourceCount}: {selected.properties.sourceCount}</div>
                 <div>{selected.properties.province}, {selected.properties.country}</div>
               </div>
             </Popup>

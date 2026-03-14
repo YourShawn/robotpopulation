@@ -1,20 +1,37 @@
 * { box-sizing: border-box; }
-html, body, #root { margin: 0; width: 100%; height: 100%; font-family: Inter, system-ui, sans-serif; background: #040b14; color: #d7f9ff; }
-.layout { display: grid; grid-template-columns: 340px 1fr; height: 100%; }
-.panel { padding: 16px; border-right: 1px solid #16303e; background: radial-gradient(circle at top, #0c1826, #06101c 60%); }
-.panel h2 { margin: 0 0 8px 0; color: #75f6ff; }
-.panel p { margin: 0 0 12px 0; color: #88a8b5; font-size: 13px; }
-.panel label { display: block; margin: 10px 0 6px; font-size: 13px; color: #9cc4d3; }
-.panel input, .panel select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #214254; background: #07131f; color: #d7f9ff; }
-.panel button { width: 100%; margin-top: 10px; padding: 10px; border: 1px solid #2f6d8f; border-radius: 8px; background: #0c2333; color: #c5f5ff; cursor: pointer; }
-.panel button:hover { background: #113046; }
-.panel .msg { margin-top: 12px; min-height: 36px; font-size: 13px; color: #71e8ff; }
-.stats { margin-top: 8px; font-size: 13px; color: #9fd8e4; }
-.cityPanel { margin-top: 12px; border-top: 1px solid #173140; padding-top: 10px; }
-.cityPanel h3 { margin: 0 0 8px 0; color: #7ef2ff; font-size: 14px; }
-.cityPanel ul { margin: 0; padding-left: 16px; max-height: 220px; overflow: auto; }
+html, body, #root { margin: 0; width: 100%; height: 100%; font-family: Inter, system-ui, sans-serif; }
+.layout { display: grid; grid-template-columns: 360px 1fr; height: 100%; }
+
+.theme-dark { --bg1:#0c1826; --bg2:#06101c; --bd:#16303e; --txt:#d7f9ff; --muted:#88a8b5; --title:#75f6ff; --btn:#0c2333; --btnbd:#2f6d8f; }
+.theme-light { --bg1:#f8fbff; --bg2:#eef5ff; --bd:#c9d9ef; --txt:#1b2b41; --muted:#5c6f87; --title:#0a4d8c; --btn:#dbeaff; --btnbd:#88a9cf; }
+.theme-neon { --bg1:#140a22; --bg2:#0a0718; --bd:#3b2e66; --txt:#e6dcff; --muted:#b1a3d8; --title:#7df9ff; --btn:#22163d; --btnbd:#7a5cd6; }
+
+.panel { padding: 16px; border-right: 1px solid var(--bd); background: radial-gradient(circle at top, var(--bg1), var(--bg2) 70%); color: var(--txt); overflow: auto; }
+.topRow { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.panel h2 { margin: 0; color: var(--title); font-size: 22px; }
+.panel p { margin: 6px 0 12px; color: var(--muted); font-size: 13px; }
+.miniControls { display: flex; gap: 6px; }
+
+.panel label { display: block; margin: 10px 0 6px; font-size: 13px; color: var(--muted); }
+.panel input, .panel select {
+  width: 100%; padding: 9px; border-radius: 8px; border: 1px solid var(--bd);
+  background: rgba(255,255,255,0.06); color: var(--txt);
+}
+.panel button {
+  width: 100%; margin-top: 10px; padding: 10px; border: 1px solid var(--btnbd); border-radius: 8px;
+  background: var(--btn); color: var(--txt); cursor: pointer;
+}
+.panel button.secondary { opacity: 0.9; }
+.panel button:hover { filter: brightness(1.06); }
+.opsBox { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--bd); }
+.panel .msg { margin-top: 10px; min-height: 20px; font-size: 12px; color: var(--muted); }
+
+.stats { margin-top: 12px; font-size: 13px; display: grid; gap: 5px; color: var(--txt); }
+.cityPanel { margin-top: 12px; border-top: 1px solid var(--bd); padding-top: 10px; }
+.cityPanel h3 { margin: 0 0 8px; color: var(--title); font-size: 14px; }
+.cityPanel ul { margin: 0; padding-left: 16px; max-height: 240px; overflow: auto; }
 .cityPanel li { margin-bottom: 8px; }
-.cityPanel a { color: #b5f6ff; text-decoration: none; font-size: 12px; }
+.cityPanel a { color: var(--title); text-decoration: none; font-size: 12px; }
 .cityPanel a:hover { text-decoration: underline; }
-.mapWrap { width: 100%; height: 100%; }
-.maplibregl-map { width: 100%; height: 100%; }
+
+.mapWrap, .maplibregl-map { width: 100%; height: 100%; }
