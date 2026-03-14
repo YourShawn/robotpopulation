@@ -3,9 +3,22 @@ import axios from 'axios';
 import Map, { Layer, Source, Popup } from 'react-map-gl/maplibre';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8080/api';
-const MAP_STYLE = 'https://basemaps.cartocdn.com/gl/dark-matter-nolabels-gl-style/style.json';
+const THEMES = {
+  dark: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+  light: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+  neon: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json'
+};
+
+const I18N = {
+  zh: { title: 'Global Robot City Atlas', subtitle: '全球每个城市机器人数量可视化', stats: '全球机器人事件', cities: '覆盖城市', level: '当前地图级别', continent: '洲（Continent）', city: '城市关键词', type: '机器人类型', refresh: '刷新数据' },
+  en: { title: 'Global Robot City Atlas', subtitle: 'Robot count by cities worldwide', stats: 'Global robot events', cities: 'Covered cities', level: 'Current map level', continent: 'Continent', city: 'City keyword', type: 'Robot type', refresh: 'Refresh' }
+};
 
 export default function App() {
+  const [lang, setLang] = useState('zh');
+  const [theme, setTheme] = useState('dark');
+  const t = I18N[lang] || I18N.zh;
+
   const [geojson, setGeojson] = useState({ type: 'FeatureCollection', features: [] });
   const [selected, setSelected] = useState(null);
   const [robotType, setRobotType] = useState('');
@@ -99,16 +112,29 @@ export default function App() {
 
         {!collapsed && (
           <>
-            <h2>Global Robot City Atlas</h2>
-            <p>全球每个城市机器人数量可视化</p>
+            <div className="topRow">
+              <h2>{t.title}</h2>
+              <div className="miniControls">
+                <select value={lang} onChange={(e) => setLang(e.target.value)}>
+                  <option value="zh">中文</option>
+                  <option value="en">English</option>
+                </select>
+                <select value={theme} onChange={(e) => setTheme(e.target.value)}>
+                  <option value="dark">Dark</option>
+                  <option value="light">Light</option>
+                  <option value="neon">Neon</option>
+                </select>
+              </div>
+            </div>
+            <p>{t.subtitle}</p>
 
             <div className="stats">
-              <div>全球机器人事件：{stats.canonicalEvents || 0}</div>
-              <div>覆盖城市：{stats.totalCities || 0}</div>
-              <div>当前地图级别：{mapLevel}</div>
+              <div>{t.stats}：{stats.canonicalEvents || 0}</div>
+              <div>{t.cities}：{stats.totalCities || 0}</div>
+              <div>{t.level}：{mapLevel}</div>
             </div>
 
-            <label>洲（Continent）</label>
+            <label>{t.continent}</label>
             <select value={continent} onChange={(e) => setContinent(e.target.value)}>
               <option value="">全部</option>
               <option value="Asia">Asia</option>
@@ -120,10 +146,10 @@ export default function App() {
               <option value="Other">Other</option>
             </select>
 
-            <label>城市关键词</label>
+            <label>{t.city}</label>
             <input value={cityKeyword} onChange={(e) => setCityKeyword(e.target.value)} placeholder="例如: Shanghai / Toronto" />
 
-            <label>机器人类型</label>
+            <label>{t.type}</label>
             <select value={robotType} onChange={(e) => setRobotType(e.target.value)}>
               <option value="">全部</option>
               <option value="robotaxi">robotaxi</option>
@@ -132,7 +158,7 @@ export default function App() {
               <option value="unknown">unknown</option>
             </select>
 
-            <button onClick={() => loadCities(mapLevel)}>刷新数据</button>
+            <button onClick={() => loadCities(mapLevel)}>{t.refresh}</button>
 
             {selected?.properties?.label && (
               <div className="cityPanel">
@@ -154,7 +180,7 @@ export default function App() {
       <main className="mapWrap">
         <Map
           initialViewState={{ longitude: 20, latitude: 20, zoom: 1.4 }}
-          mapStyle={MAP_STYLE}
+          mapStyle={THEMES[theme]}
           onMoveEnd={(e) => setZoom(e.viewState.zoom)}
           onClick={(e) => {
             const f = e.features?.[0];
