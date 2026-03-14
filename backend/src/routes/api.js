@@ -1,7 +1,9 @@
 import { Router } from 'express';
-import { RawItem } from '../models/RawItem.js';
 import { crawlSearch, crawlCompanySources, crawlFeedSources } from '../services/scraperService.js';
 import { sourcePools } from '../config/sources.js';
+import { RawArticle } from '../models/RawArticle.js';
+import { ExtractedFact } from '../models/ExtractedFact.js';
+import { CanonicalEvent } from '../models/CanonicalEvent.js';
 
 export const apiRouter = Router();
 
@@ -9,18 +11,18 @@ apiRouter.get('/health', (_, res) => {
   res.json({ ok: true, service: 'map-intel-backend' });
 });
 
+apiRouter.get('/sources', (_, res) => res.json(sourcePools));
+
 apiRouter.post('/crawl', async (req, res) => {
   try {
     const { query, limit = 20 } = req.body ?? {};
     if (!query) return res.status(400).json({ error: 'query is required' });
-
     const result = await crawlSearch({
       query,
       limit: Number(limit),
       userAgent: process.env.USER_AGENT,
-      requestDelayMs: Number(process.env.REQUEST_DELAY_MS || 1200)
+      requestDelayMs: Number(process.env.REQUEST_DELAY_MS || 800)
     });
-
     return res.json(result);
   } catch (error) {
     return res.status(500).json({ error: error.message });
@@ -29,11 +31,11 @@ apiRouter.post('/crawl', async (req, res) => {
 
 apiRouter.post('/crawl/companies', async (req, res) => {
   try {
-    const { perSourceLimit = 8 } = req.body ?? {};
+    const { perSourceLimit = 6 } = req.body ?? {};
     const result = await crawlCompanySources({
       perSourceLimit: Number(perSourceLimit),
       userAgent: process.env.USER_AGENT,
-      requestDelayMs: Number(process.env.REQUEST_DELAY_MS || 1200)
+      requestDelayMs: Number(process.env.REQUEST_DELAY_MS || 800)
     });
     return res.json(result);
   } catch (error) {
@@ -47,7 +49,7 @@ apiRouter.post('/crawl/feeds', async (req, res) => {
     const result = await crawlFeedSources({
       perFeedLimit: Number(perFeedLimit),
       userAgent: process.env.USER_AGENT,
-      requestDelayMs: Number(process.env.REQUEST_DELAY_MS || 1200)
+      requestDelayMs: Number(process.env.REQUEST_DELAY_MS || 800)
     });
     return res.json(result);
   } catch (error) {
@@ -55,49 +57,42 @@ apiRouter.post('/crawl/feeds', async (req, res) => {
   }
 });
 
-apiRouter.get('/items', async (req, res) => {
-  const { q, city, robotType, sourceType, company, limit = 100 } = req.query;
-  const filter = {};
-  if (q) {
-    filter.$or = [
-      { title: { $regex: q, $options: 'i' } },
-      { snippet: { $regex: q, $options: 'i' } },
-      { query: { $regex: q, $options: 'i' } }
-    ];
-  }
-  if (city) filter.city = city;
-  if (robotType) filter.robotType = robotType;
-  if (sourceType) filter.sourceType = sourceType;
-  if (company) filter.company = company;
+apiRouter.get('/stats', async (_, res) => {
+  const [rawArticles, extractedFacts, canonicalEvents, totalCities, byRobotType] = await Promise.all([
+    RawArticle.countDocuments(),
+    ExtractedFact.countDocuments(),
+    CanonicalEvent.countDocuments(),
+    CanonicalEvent.distinct('cityCanonical').then((c) => c.filter((x) => x && x !== 'unknown').length),
+    CanonicalEvent.aggregate([{ $group: { _id: '$robotType', count: { $sum: 1 } } }, { $sort: { count: -1 } }])
+  ]);
 
-  const data = await RawItem.find(filter).sort({ createdAt: -1 }).limit(Number(limit));
+  res.json({ rawArticles, extractedFacts, canonicalEvents, totalCities, byRobotType });
+});
+
+apiRouter.get('/events', async (req, res) => {
+  const { city, country, robotType, eventType, company, limit = 100 } = req.query;
+  const filter = {};
+  if (city) filter.city = city;
+  if (country) filter.country = country;
+  if (robotType) filter.robotType = robotType;
+  if (eventType) filter.eventType = eventType;
+  if (company) filter.companyCanonical = company;
+
+  const data = await CanonicalEvent.find(filter).sort({ lastSeen: -1 }).limit(Number(limit));
   res.json({ total: data.length, data });
 });
 
-apiRouter.get('/sources', async (_, res) => {
-  res.json(sourcePools);
-});
-
-apiRouter.get('/stats', async (_, res) => {
-  const [totalItems, totalCities, byRobotType] = await Promise.all([
-    RawItem.countDocuments(),
-    RawItem.distinct('city').then((c) => c.filter((x) => x && x !== 'Unknown').length),
-    RawItem.aggregate([{ $group: { _id: '$robotType', count: { $sum: 1 } } }, { $sort: { count: -1 } }])
-  ]);
-
-  res.json({ totalItems, totalCities, byRobotType });
-});
-
 apiRouter.get('/map/cities', async (_, res) => {
-  const rows = await RawItem.aggregate([
+  const rows = await CanonicalEvent.aggregate([
     { $match: { 'location.lat': { $ne: null }, 'location.lon': { $ne: null } } },
     {
       $group: {
-        _id: '$city',
+        _id: { city: '$city', province: '$province', country: '$country', cityCanonical: '$cityCanonical' },
         count: { $sum: 1 },
+        sourceCount: { $sum: '$sourceCount' },
         lat: { $avg: '$location.lat' },
         lon: { $avg: '$location.lon' },
-        latestAt: { $max: '$createdAt' }
+        latestAt: { $max: '$lastSeen' }
       }
     },
     { $sort: { count: -1 } }
@@ -107,14 +102,15 @@ apiRouter.get('/map/cities', async (_, res) => {
     type: 'Feature',
     geometry: { type: 'Point', coordinates: [r.lon, r.lat] },
     properties: {
-      city: r._id,
-      count: r.count,
+      city: r._id.city,
+      cityCanonical: r._id.cityCanonical,
+      province: r._id.province,
+      country: r._id.country,
+      eventCount: r.count,
+      sourceCount: r.sourceCount,
       latestAt: r.latestAt
     }
   }));
 
-  res.json({
-    type: 'FeatureCollection',
-    features
-  });
+  res.json({ type: 'FeatureCollection', features });
 });

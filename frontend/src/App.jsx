@@ -15,7 +15,7 @@ export default function App() {
   const [robotType, setRobotType] = useState('');
   const [sourceType, setSourceType] = useState('');
   const [cityItems, setCityItems] = useState([]);
-  const [stats, setStats] = useState({ totalItems: 0, totalCities: 0, byRobotType: [] });
+  const [stats, setStats] = useState({ rawArticles: 0, extractedFacts: 0, canonicalEvents: 0, totalCities: 0, byRobotType: [] });
 
   const pointLayer = useMemo(
     () => ({
@@ -42,11 +42,10 @@ export default function App() {
   }
 
   async function loadCityItems(city) {
-    const { data } = await axios.get(`${API_BASE}/items`, {
+    const { data } = await axios.get(`${API_BASE}/events`, {
       params: {
         city,
         robotType: robotType || undefined,
-        sourceType: sourceType || undefined,
         limit: 20
       }
     });
@@ -58,7 +57,8 @@ export default function App() {
       setLoading(true);
       setMsg('正在跑核心来源 RSS 抓取...');
       const { data } = await axios.post(`${API_BASE}/crawl/feeds`, { perFeedLimit: 8 });
-      setMsg(`来源抓取完成：新增 ${data.summary.inserted}，重复URL ${data.summary.duplicateUrl}`);
+      const total = data.details?.reduce((n, x) => n + (x.eventsMerged || 0), 0) || 0;
+      setMsg(`来源抓取完成：事件合并 ${total}`);
       await loadCities();
     } catch (e) {
       setMsg(`失败：${e.response?.data?.error || e.message}`);
@@ -72,7 +72,8 @@ export default function App() {
       setLoading(true);
       setMsg('正在跑公司来源池抓取...');
       const { data } = await axios.post(`${API_BASE}/crawl/companies`, { perSourceLimit: 6 });
-      setMsg(`公司池抓取完成：新增 ${data.summary.inserted}，重复URL ${data.summary.duplicateUrl}`);
+      const total = data.details?.reduce((n, x) => n + (x.eventsMerged || 0), 0) || 0;
+      setMsg(`公司池抓取完成：事件合并 ${total}`);
       await loadCities();
     } catch (e) {
       setMsg(`失败：${e.response?.data?.error || e.message}`);
@@ -90,7 +91,7 @@ export default function App() {
       setLoading(true);
       setMsg('正在抓取并去重...');
       const { data } = await axios.post(`${API_BASE}/crawl`, { query, limit: Number(crawlLimit) });
-      setMsg(`完成：新增 ${data.inserted}，URL重复 ${data.duplicateUrl}，内容重复 ${data.duplicateContent}`);
+      setMsg(`完成：原始 ${data.rawSaved}，事实 ${data.factsSaved}，事件合并 ${data.eventsMerged}`);
       await loadCities();
     } catch (e) {
       setMsg(`失败：${e.response?.data?.error || e.message}`);
@@ -133,7 +134,9 @@ export default function App() {
         <p className="msg">{msg}</p>
 
         <div className="stats">
-          <div>总条目：{stats.totalItems}</div>
+          <div>原始来源：{stats.rawArticles}</div>
+          <div>抽取事实：{stats.extractedFacts}</div>
+          <div>标准事件：{stats.canonicalEvents}</div>
           <div>覆盖城市：{stats.totalCities}</div>
         </div>
 
@@ -143,7 +146,9 @@ export default function App() {
             <ul>
               {cityItems.map((item) => (
                 <li key={item._id}>
-                  <a href={item.sourceUrl} target="_blank" rel="noreferrer">{item.title || item.sourceUrl}</a>
+                  <div><strong>{item.companyCanonical || item.company}</strong> · {item.robotType} · {item.eventType}</div>
+                  <div>sources: {item.sourceCount} · confidence: {Number(item.confidence || 0).toFixed(2)}</div>
+                  {item.sourceUrls?.[0] && <a href={item.sourceUrls[0]} target="_blank" rel="noreferrer">查看主来源</a>}
                 </li>
               ))}
             </ul>
@@ -177,7 +182,9 @@ export default function App() {
             >
               <div>
                 <strong>{selected.properties.city}</strong>
-                <div>条目数：{selected.properties.count}</div>
+                <div>事件数：{selected.properties.eventCount}</div>
+                <div>来源数：{selected.properties.sourceCount}</div>
+                <div>{selected.properties.province}, {selected.properties.country}</div>
               </div>
             </Popup>
           )}

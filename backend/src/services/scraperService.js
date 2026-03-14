@@ -1,20 +1,42 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import { RawItem } from '../models/RawItem.js';
+import { randomUUID } from 'node:crypto';
 import { geocodeCity } from './geocodeService.js';
-import { hashContent, normalizeUrl } from '../utils/dedupe.js';
-import { companySeeds } from '../config/companySeeds.js';
+import { normalizeUrl } from '../utils/dedupe.js';
 import { cityDictionary } from '../config/cityDictionary.js';
+import { companySeeds } from '../config/companySeeds.js';
+import { RawArticle } from '../models/RawArticle.js';
+import { ExtractedFact } from '../models/ExtractedFact.js';
+import { CanonicalEvent } from '../models/CanonicalEvent.js';
 
 const CITY_REGEX = new RegExp(`\\b(${cityDictionary.join('|')})\\b`, 'i');
 
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+const sourceFeeds = [
+  { name: 'Robot Report', url: 'https://www.therobotreport.com/feed/', sourceType: 'source-feed' },
+  { name: 'TechCrunch', url: 'https://techcrunch.com/category/robotics/feed/', sourceType: 'source-feed' }
+];
 
-function inferCity(text = '') {
-  const m = text.match(CITY_REGEX);
-  return m?.[1] ?? 'Unknown';
+const companyAliases = {
+  waymo: ['waymo', 'waymo one', 'waymo llc'],
+  cruise: ['cruise', 'getcruise'],
+  zoox: ['zoox'],
+  starship: ['starship', 'starship technologies'],
+  serve: ['serve robotics', 'serve'],
+  kiwibot: ['kiwibot'],
+  locus: ['locus robotics', 'locus'],
+  greyorange: ['greyorange', 'greyorange']
+};
+
+function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
+
+function inferCity(text = '') { return text.match(CITY_REGEX)?.[1] || 'Unknown'; }
+
+function canonicalCompany(text = '') {
+  const t = text.toLowerCase();
+  for (const [k, aliases] of Object.entries(companyAliases)) {
+    if (aliases.some((a) => t.includes(a))) return k;
+  }
+  return 'unknown';
 }
 
 function inferRobotType(text = '') {
@@ -25,192 +47,193 @@ function inferRobotType(text = '') {
   return 'unknown';
 }
 
-function inferDeploymentStatus(text = '') {
+function inferEventType(text = '') {
   const t = text.toLowerCase();
-  if (t.includes('launch') || t.includes('live') || t.includes('operat')) return 'live';
+  if (t.includes('launch') || t.includes('rolled out') || t.includes('began operations')) return 'launch';
   if (t.includes('pilot') || t.includes('trial')) return 'pilot';
-  if (t.includes('plan') || t.includes('announce')) return 'announced';
-  return 'unknown';
+  if (t.includes('expand') || t.includes('expanded')) return 'expand';
+  return 'update';
 }
 
-const sourceFeeds = [
-  { name: 'Robot Report', url: 'https://www.therobotreport.com/feed/', robotType: 'unknown' },
-  { name: 'TechCrunch', url: 'https://techcrunch.com/category/robotics/feed/', robotType: 'unknown' },
-  { name: 'Reuters Tech', url: 'https://www.reutersagency.com/feed/?best-topics=technology', robotType: 'unknown' },
-  { name: 'Waymo Blog', url: 'https://waymo.com/blog/rss/', robotType: 'robotaxi' },
-  { name: 'Starship News', url: 'https://www.starship.xyz/news/rss.xml', robotType: 'delivery' }
-];
+function extractCount(text = '') {
+  const m = text.match(/\b(\d{2,5})\b/);
+  if (!m) return { best: null, min: null, max: null };
+  const n = Number(m[1]);
+  return { best: n, min: n, max: n };
+}
 
-async function upsertItems(rows, base) {
-  const stats = { inserted: 0, duplicateUrl: 0, duplicateContent: 0, failed: 0 };
+function sourceWeight(site = '') {
+  const s = site.toLowerCase();
+  if (s.includes('waymo.com') || s.includes('cruise') || s.includes('zoox')) return 0.5;
+  if (s.includes('reuters')) return 0.3;
+  if (s.includes('therobotreport') || s.includes('techcrunch')) return 0.2;
+  return 0.08;
+}
 
-  for (const row of rows) {
-    const normalizedUrl = normalizeUrl(row.sourceUrl);
-    const contentHash = hashContent(row);
-    const city = inferCity(`${row.title} ${row.snippet}`);
-    const location = await geocodeCity(city, base.userAgent);
-    const robotType = row.robotType || inferRobotType(`${row.title} ${row.snippet}`);
-    const deploymentStatus = inferDeploymentStatus(`${row.title} ${row.snippet}`);
+function cityCanonical(city = '', country = 'unknown') {
+  if (!city || city === 'Unknown') return 'unknown';
+  return `${city.toLowerCase().replace(/\s+/g, '_')}_${country.toLowerCase()}`;
+}
 
-    try {
-      await RawItem.create({
-        query: base.query,
-        source: base.source || 'search',
-        sourceType: base.sourceType || 'news',
-        sourceUrl: row.sourceUrl,
-        normalizedUrl,
-        title: row.title,
-        snippet: row.snippet,
-        contentHash,
-        city,
-        country: 'Unknown',
-        location,
-        company: row.company || 'Unknown',
-        robotType,
-        deploymentStatus,
-        publishedAt: row.publishedAt || null
-      });
-      stats.inserted += 1;
-    } catch (err) {
-      if (err?.code === 11000) {
-        const isUrlDup = err?.keyPattern?.normalizedUrl;
-        if (isUrlDup) stats.duplicateUrl += 1;
-        else stats.duplicateContent += 1;
-      } else {
-        stats.failed += 1;
-      }
-    }
+function monthKey(d = new Date()) {
+  const dt = d instanceof Date ? d : new Date(d);
+  return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, '0')}`;
+}
 
-    await sleep(base.requestDelayMs || 1200);
+async function persistRows(rows, { query, sourceSite, sourceType, userAgent, requestDelayMs = 600 }) {
+  const batchId = randomUUID();
+  let rawSaved = 0;
+  let factsSaved = 0;
+  let eventsMerged = 0;
+
+  for (const r of rows) {
+    const normalizedUrl = normalizeUrl(r.sourceUrl);
+    const raw = await RawArticle.create({
+      title: r.title,
+      url: r.sourceUrl,
+      normalizedUrl,
+      sourceSite,
+      sourceType,
+      snippet: r.snippet,
+      content: r.snippet,
+      publishedAt: r.publishedAt || null,
+      query,
+      fetchBatchId: batchId
+    });
+    rawSaved += 1;
+
+    const mixText = `${r.title} ${r.snippet}`;
+    const city = inferCity(mixText);
+    const country = city === 'Unknown' ? 'Unknown' : 'US';
+    const cCanonical = cityCanonical(city, country);
+    const companyCanonical = canonicalCompany(mixText);
+    const robotType = r.robotType || inferRobotType(mixText);
+    const eventType = inferEventType(mixText);
+    const eventDate = r.publishedAt ? new Date(r.publishedAt) : new Date();
+    const { best, min, max } = extractCount(mixText);
+    const location = await geocodeCity(city, userAgent);
+    const confidenceBase = Math.min(0.95, 0.25 + sourceWeight(r.sourceUrl || sourceSite));
+
+    const fact = await ExtractedFact.create({
+      rawArticleId: raw._id,
+      company: r.company || companyCanonical,
+      companyCanonical,
+      robotType,
+      eventType,
+      city,
+      cityCanonical: cCanonical,
+      province: 'Unknown',
+      country,
+      location,
+      countBest: best,
+      countMin: min,
+      countMax: max,
+      eventDate,
+      confidence: confidenceBase,
+      sourceUrl: r.sourceUrl,
+      sourceSite
+    });
+    factsSaved += 1;
+
+    const fingerprint = `${companyCanonical}|${cCanonical}|${robotType}|${eventType}|${monthKey(eventDate)}`;
+    await CanonicalEvent.findOneAndUpdate(
+      { eventFingerprint: fingerprint },
+      {
+        $setOnInsert: {
+          eventFingerprint: fingerprint,
+          company: r.company || companyCanonical,
+          companyCanonical,
+          robotType,
+          eventType,
+          city,
+          cityCanonical: cCanonical,
+          province: 'Unknown',
+          country,
+          location,
+          eventDate,
+          countBest: best,
+          countMin: min,
+          countMax: max,
+          firstSeen: new Date()
+        },
+        $set: { lastSeen: new Date() },
+        $addToSet: { sourceUrls: r.sourceUrl, sourceSites: sourceSite },
+        $max: { confidence: confidenceBase }
+      },
+      { upsert: true, new: true }
+    );
+
+    await CanonicalEvent.updateOne(
+      { eventFingerprint: fingerprint },
+      [{ $set: { sourceCount: { $size: '$sourceUrls' } } }]
+    );
+
+    eventsMerged += 1;
+    await sleep(requestDelayMs);
   }
 
-  return stats;
+  return { batchId, scanned: rows.length, rawSaved, factsSaved, eventsMerged };
 }
 
-export async function crawlSearch({ query, limit = 20, userAgent, requestDelayMs = 1200 }) {
+export async function crawlSearch({ query, limit = 20, userAgent, requestDelayMs = 800 }) {
   const rows = [];
 
   try {
-    const url = 'https://duckduckgo.com/html/';
-    const { data } = await axios.get(url, {
-      params: { q: query },
-      headers: { 'User-Agent': userAgent }
-    });
-
-    const $ = cheerio.load(data);
-    $('.result').each((_, el) => {
-      if (rows.length >= limit) return;
-      const title = $(el).find('.result__a').text().trim();
-      const sourceUrl = $(el).find('.result__a').attr('href')?.trim();
-      const snippet = $(el).find('.result__snippet').text().trim();
-      if (title && sourceUrl) rows.push({ title, sourceUrl, snippet });
-    });
-  } catch {
-    // ignore, fallback below
-  }
-
-  if (rows.length === 0) {
-    const rssUrl = 'https://news.google.com/rss/search';
-    const { data: xml } = await axios.get(rssUrl, {
+    const { data: xml } = await axios.get('https://news.google.com/rss/search', {
       params: { q: query, hl: 'en-US', gl: 'US', ceid: 'US:en' },
       headers: { 'User-Agent': userAgent }
     });
-
     const $xml = cheerio.load(xml, { xmlMode: true });
     $xml('item').each((_, el) => {
       if (rows.length >= limit) return;
-      const title = $xml(el).find('title').first().text().trim();
-      const sourceUrl = $xml(el).find('link').first().text().trim();
-      const snippet = $xml(el).find('description').first().text().replace(/<[^>]+>/g, ' ').trim();
-      if (title && sourceUrl) rows.push({ title, sourceUrl, snippet });
+      rows.push({
+        title: $xml(el).find('title').first().text().trim(),
+        sourceUrl: $xml(el).find('link').first().text().trim(),
+        snippet: $xml(el).find('description').first().text().replace(/<[^>]+>/g, ' ').trim(),
+        publishedAt: $xml(el).find('pubDate').first().text().trim()
+      });
     });
+  } catch {
+    // noop
   }
 
-  const stats = await upsertItems(rows, {
-    query,
-    source: rows.length ? 'search' : 'unknown',
-    sourceType: 'search-news',
-    userAgent,
-    requestDelayMs
-  });
-
-  return { query, scanned: rows.length, ...stats };
+  return persistRows(rows, { query, sourceSite: 'google-news', sourceType: 'search-news', userAgent, requestDelayMs });
 }
 
-export async function crawlFeedSources({ userAgent, perFeedLimit = 10, requestDelayMs = 800 }) {
+export async function crawlFeedSources({ userAgent, perFeedLimit = 10, requestDelayMs = 600 }) {
   const details = [];
-
   for (const feed of sourceFeeds) {
     try {
       const { data: xml } = await axios.get(feed.url, { headers: { 'User-Agent': userAgent }, timeout: 15000 });
       const $xml = cheerio.load(xml, { xmlMode: true });
       const rows = [];
-
       $xml('item').each((_, el) => {
         if (rows.length >= perFeedLimit) return;
-        const title = $xml(el).find('title').first().text().trim();
-        const sourceUrl = $xml(el).find('link').first().text().trim();
-        const snippet = $xml(el).find('description').first().text().replace(/<[^>]+>/g, ' ').trim();
-        const publishedText = $xml(el).find('pubDate').first().text().trim();
-        if (title && sourceUrl) {
-          rows.push({
-            title,
-            sourceUrl,
-            snippet,
-            robotType: feed.robotType,
-            company: feed.name,
-            publishedAt: publishedText ? new Date(publishedText) : null
-          });
-        }
+        rows.push({
+          title: $xml(el).find('title').first().text().trim(),
+          sourceUrl: $xml(el).find('link').first().text().trim(),
+          snippet: $xml(el).find('description').first().text().replace(/<[^>]+>/g, ' ').trim(),
+          publishedAt: $xml(el).find('pubDate').first().text().trim(),
+          company: feed.name
+        });
       });
-
-      const stats = await upsertItems(rows, {
-        query: `${feed.name} feed`,
-        source: feed.name,
-        sourceType: 'source-feed',
-        userAgent,
-        requestDelayMs
+      const s = await persistRows(rows, {
+        query: `${feed.name} feed`, sourceSite: feed.name, sourceType: feed.sourceType, userAgent, requestDelayMs
       });
-
-      details.push({ source: feed.name, scanned: rows.length, ...stats });
+      details.push({ source: feed.name, ...s });
     } catch (error) {
-      details.push({ source: feed.name, scanned: 0, inserted: 0, duplicateUrl: 0, duplicateContent: 0, failed: 1, error: error.message });
+      details.push({ source: feed.name, scanned: 0, rawSaved: 0, factsSaved: 0, eventsMerged: 0, error: error.message });
     }
   }
-
-  const summary = details.reduce(
-    (acc, s) => {
-      acc.inserted += s.inserted || 0;
-      acc.duplicateUrl += s.duplicateUrl || 0;
-      acc.duplicateContent += s.duplicateContent || 0;
-      acc.failed += s.failed || 0;
-      return acc;
-    },
-    { inserted: 0, duplicateUrl: 0, duplicateContent: 0, failed: 0 }
-  );
-
-  return { feeds: details.length, perFeedLimit, summary, details };
+  return { feeds: details.length, details };
 }
 
-export async function crawlCompanySources({ userAgent, perSourceLimit = 8, requestDelayMs = 1200 }) {
-  const allStats = [];
-
+export async function crawlCompanySources({ userAgent, perSourceLimit = 6, requestDelayMs = 700 }) {
+  const details = [];
   for (const company of companySeeds) {
-    const q = `${company.name} robot deployment city robotaxi delivery`;
-    const result = await crawlSearch({ query: q, limit: perSourceLimit, userAgent, requestDelayMs });
-    allStats.push({ company: company.name, robotType: company.robotType, ...result });
+    const q = `${company.name} robot deployment city robotaxi delivery`; 
+    const s = await crawlSearch({ query: q, limit: perSourceLimit, userAgent, requestDelayMs });
+    details.push({ company: company.name, robotType: company.robotType, ...s });
   }
-
-  const summary = allStats.reduce(
-    (acc, s) => {
-      acc.inserted += s.inserted;
-      acc.duplicateUrl += s.duplicateUrl;
-      acc.duplicateContent += s.duplicateContent;
-      acc.failed += s.failed;
-      return acc;
-    },
-    { inserted: 0, duplicateUrl: 0, duplicateContent: 0, failed: 0 }
-  );
-
-  return { companies: allStats.length, perSourceLimit, summary, details: allStats };
+  return { companies: details.length, details };
 }
