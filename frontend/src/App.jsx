@@ -21,7 +21,7 @@ export default function App() {
 
   const mapRef = useRef(null);
 
-  const [viewState, setViewState] = useState({ longitude: 20, latitude: 20, zoom: 1.4 });
+  const [zoom, setZoom] = useState(1.4);
   const [geojson, setGeojson] = useState({ type: 'FeatureCollection', features: [] });
   const [selected, setSelected] = useState(null);
   const [robotType, setRobotType] = useState('');
@@ -31,7 +31,6 @@ export default function App() {
   const [collapsed, setCollapsed] = useState(false);
   const [stats, setStats] = useState({ canonicalEvents: 0, totalCities: 0 });
 
-  const zoom = Number.isFinite(viewState.zoom) ? Math.max(1, Math.min(8, viewState.zoom)) : 1.4;
   const mapLevel = zoom < 3 ? 'country' : zoom < 6 ? 'province' : 'city';
 
   const heatLayer = useMemo(() => ({
@@ -190,16 +189,16 @@ export default function App() {
       <main className="mapWrap">
         <Map
           ref={mapRef}
-          viewState={viewState}
+          initialViewState={{ longitude: 20, latitude: 20, zoom: 1.4 }}
           minZoom={1}
           maxZoom={8}
           maxPitch={0}
           dragRotate={false}
           touchZoomRotate={false}
           mapStyle={THEMES[theme]}
-          onMove={(e) => {
-            const z = Math.max(1, Math.min(8, e.viewState.zoom));
-            setViewState({ longitude: e.viewState.longitude, latitude: e.viewState.latitude, zoom: z });
+          onMoveEnd={(e) => {
+            const z = Math.max(1, Math.min(8, Number(e.viewState.zoom) || 1.4));
+            setZoom(z);
           }}
           onClick={(e) => {
             const f = e.features?.[0];
