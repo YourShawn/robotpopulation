@@ -1,0 +1,1002 @@
+[
+  {
+    "name": "Waymo",
+    "slug": "waymo",
+    "country": "US",
+    "robot_type": "robotaxi",
+    "website": "https://waymo.com",
+    "status": "active"
+  },
+  {
+    "name": "Cruise",
+    "slug": "cruise",
+    "country": "US",
+    "robot_type": "robotaxi",
+    "website": "https://getcruise.com",
+    "status": "active"
+  },
+  {
+    "name": "Zoox",
+    "slug": "zoox",
+    "country": "US",
+    "robot_type": "robotaxi",
+    "website": "https://zoox.com",
+    "status": "active"
+  },
+  {
+    "name": "Motional",
+    "slug": "motional",
+    "country": "US",
+    "robot_type": "robotaxi",
+    "website": "https://motional.com",
+    "status": "active"
+  },
+  {
+    "name": "Aurora",
+    "slug": "aurora",
+    "country": "US",
+    "robot_type": "robotaxi",
+    "website": "https://aurora.tech",
+    "status": "active"
+  },
+  {
+    "name": "Pony.ai",
+    "slug": "ponyai",
+    "country": "CN",
+    "robot_type": "robotaxi",
+    "website": "https://pony.ai",
+    "status": "active"
+  },
+  {
+    "name": "WeRide",
+    "slug": "weride",
+    "country": "CN",
+    "robot_type": "robotaxi",
+    "website": "https://weride.ai",
+    "status": "active"
+  },
+  {
+    "name": "AutoX",
+    "slug": "autox",
+    "country": "CN",
+    "robot_type": "robotaxi",
+    "website": "https://autox.ai",
+    "status": "active"
+  },
+  {
+    "name": "Baidu Apollo",
+    "slug": "baidu-apollo",
+    "country": "CN",
+    "robot_type": "robotaxi",
+    "website": "https://apollo.auto",
+    "status": "active"
+  },
+  {
+    "name": "Mobileye",
+    "slug": "mobileye",
+    "country": "IL",
+    "robot_type": "robotaxi",
+    "website": "https://mobileye.com",
+    "status": "active"
+  },
+  {
+    "name": "May Mobility",
+    "slug": "may-mobility",
+    "country": "US",
+    "robot_type": "robotaxi",
+    "website": "https://maymobility.com",
+    "status": "active"
+  },
+  {
+    "name": "Yandex AV",
+    "slug": "yandex-av",
+    "country": "RU",
+    "robot_type": "robotaxi",
+    "website": "https://yandex.com",
+    "status": "active"
+  },
+  {
+    "name": "Starship Technologies",
+    "slug": "starship-technologies",
+    "country": "EE",
+    "robot_type": "delivery_robot",
+    "website": "https://starship.xyz",
+    "status": "active"
+  },
+  {
+    "name": "Serve Robotics",
+    "slug": "serve-robotics",
+    "country": "US",
+    "robot_type": "delivery_robot",
+    "website": "https://serverobotics.com",
+    "status": "active"
+  },
+  {
+    "name": "Kiwibot",
+    "slug": "kiwibot",
+    "country": "US",
+    "robot_type": "delivery_robot",
+    "website": "https://kiwibot.com",
+    "status": "active"
+  },
+  {
+    "name": "Coco Robotics",
+    "slug": "coco-robotics",
+    "country": "US",
+    "robot_type": "delivery_robot",
+    "website": "https://cocodelivery.com",
+    "status": "active"
+  },
+  {
+    "name": "Nuro",
+    "slug": "nuro",
+    "country": "US",
+    "robot_type": "delivery_robot",
+    "website": "https://nuro.ai",
+    "status": "active"
+  },
+  {
+    "name": "JD Logistics Robotics",
+    "slug": "jd-logistics-robotics",
+    "country": "CN",
+    "robot_type": "delivery_robot",
+    "website": "https://jd.com",
+    "status": "active"
+  },
+  {
+    "name": "Meituan Robotics",
+    "slug": "meituan-robotics",
+    "country": "CN",
+    "robot_type": "delivery_robot",
+    "website": "https://meituan.com",
+    "status": "active"
+  },
+  {
+    "name": "Pudu Robotics",
+    "slug": "pudu-robotics",
+    "country": "CN",
+    "robot_type": "service_robot",
+    "website": "https://pudurobotics.com",
+    "status": "active"
+  },
+  {
+    "name": "Keenon Robotics",
+    "slug": "keenon-robotics",
+    "country": "CN",
+    "robot_type": "service_robot",
+    "website": "https://keenon.com",
+    "status": "active"
+  },
+  {
+    "name": "Geek+",
+    "slug": "geek",
+    "country": "CN",
+    "robot_type": "warehouse_robot",
+    "website": "https://geekplus.com",
+    "status": "active"
+  },
+  {
+    "name": "Locus Robotics",
+    "slug": "locus-robotics",
+    "country": "US",
+    "robot_type": "warehouse_robot",
+    "website": "https://locusrobotics.com",
+    "status": "active"
+  },
+  {
+    "name": "GreyOrange",
+    "slug": "greyorange",
+    "country": "US",
+    "robot_type": "warehouse_robot",
+    "website": "https://greyorange.com",
+    "status": "active"
+  },
+  {
+    "name": "AutoStore",
+    "slug": "autostore",
+    "country": "NO",
+    "robot_type": "warehouse_robot",
+    "website": "https://autostore.com",
+    "status": "active"
+  },
+  {
+    "name": "Fetch Robotics",
+    "slug": "fetch-robotics",
+    "country": "US",
+    "robot_type": "warehouse_robot",
+    "website": "https://fetchrobotics.com",
+    "status": "active"
+  },
+  {
+    "name": "Exotec",
+    "slug": "exotec",
+    "country": "FR",
+    "robot_type": "warehouse_robot",
+    "website": "https://exotec.com",
+    "status": "active"
+  },
+  {
+    "name": "Hikrobot",
+    "slug": "hikrobot",
+    "country": "CN",
+    "robot_type": "warehouse_robot",
+    "website": "https://hikrobotics.com",
+    "status": "active"
+  },
+  {
+    "name": "6 River Systems",
+    "slug": "6-river-systems",
+    "country": "US",
+    "robot_type": "warehouse_robot",
+    "website": "https://6river.com",
+    "status": "active"
+  },
+  {
+    "name": "Boston Dynamics",
+    "slug": "boston-dynamics",
+    "country": "US",
+    "robot_type": "humanoid",
+    "website": "https://bostondynamics.com",
+    "status": "active"
+  },
+  {
+    "name": "Figure AI",
+    "slug": "figure-ai",
+    "country": "US",
+    "robot_type": "humanoid",
+    "website": "https://figure.ai",
+    "status": "active"
+  },
+  {
+    "name": "Agility Robotics",
+    "slug": "agility-robotics",
+    "country": "US",
+    "robot_type": "humanoid",
+    "website": "https://agilityrobotics.com",
+    "status": "active"
+  },
+  {
+    "name": "Apptronik",
+    "slug": "apptronik",
+    "country": "US",
+    "robot_type": "humanoid",
+    "website": "https://apptronik.com",
+    "status": "active"
+  },
+  {
+    "name": "Unitree",
+    "slug": "unitree",
+    "country": "CN",
+    "robot_type": "humanoid",
+    "website": "https://unitree.com",
+    "status": "active"
+  },
+  {
+    "name": "Fourier Intelligence",
+    "slug": "fourier-intelligence",
+    "country": "CN",
+    "robot_type": "humanoid",
+    "website": "https://fourierintelligence.com",
+    "status": "active"
+  },
+  {
+    "name": "Sanctuary AI",
+    "slug": "sanctuary-ai",
+    "country": "CA",
+    "robot_type": "humanoid",
+    "website": "https://sanctuary.ai",
+    "status": "active"
+  },
+  {
+    "name": "Tesla Optimus",
+    "slug": "tesla-optimus",
+    "country": "US",
+    "robot_type": "humanoid",
+    "website": "https://tesla.com",
+    "status": "active"
+  },
+  {
+    "name": "SoftBank Robotics",
+    "slug": "softbank-robotics",
+    "country": "JP",
+    "robot_type": "service_robot",
+    "website": "https://softbankrobotics.com",
+    "status": "active"
+  },
+  {
+    "name": "UBTech",
+    "slug": "ubtech",
+    "country": "CN",
+    "robot_type": "service_robot",
+    "website": "https://ubtrobot.com",
+    "status": "active"
+  },
+  {
+    "name": "Temi",
+    "slug": "temi",
+    "country": "IL",
+    "robot_type": "service_robot",
+    "website": "https://temi.com",
+    "status": "active"
+  },
+  {
+    "name": "OrionStar",
+    "slug": "orionstar",
+    "country": "CN",
+    "robot_type": "service_robot",
+    "website": "https://orionstar.com",
+    "status": "active"
+  },
+  {
+    "name": "PAL Robotics",
+    "slug": "pal-robotics",
+    "country": "ES",
+    "robot_type": "service_robot",
+    "website": "https://pal-robotics.com",
+    "status": "active"
+  },
+  {
+    "name": "ABB Robotics",
+    "slug": "abb-robotics",
+    "country": "CH",
+    "robot_type": "industrial_robot",
+    "website": "https://abb.com/robotics",
+    "status": "active"
+  },
+  {
+    "name": "FANUC",
+    "slug": "fanuc",
+    "country": "JP",
+    "robot_type": "industrial_robot",
+    "website": "https://fanuc.com",
+    "status": "active"
+  },
+  {
+    "name": "KUKA",
+    "slug": "kuka",
+    "country": "DE",
+    "robot_type": "industrial_robot",
+    "website": "https://kuka.com",
+    "status": "active"
+  },
+  {
+    "name": "Yaskawa",
+    "slug": "yaskawa",
+    "country": "JP",
+    "robot_type": "industrial_robot",
+    "website": "https://yaskawa.com",
+    "status": "active"
+  },
+  {
+    "name": "Comau",
+    "slug": "comau",
+    "country": "IT",
+    "robot_type": "industrial_robot",
+    "website": "https://comau.com",
+    "status": "active"
+  },
+  {
+    "name": "Nachi",
+    "slug": "nachi",
+    "country": "JP",
+    "robot_type": "industrial_robot",
+    "website": "https://nachi-fujikoshi.co.jp",
+    "status": "active"
+  },
+  {
+    "name": "Nova Motion 48",
+    "slug": "nova-motion-48",
+    "country": "IN",
+    "robot_type": "humanoid",
+    "website": "https://nova-motion-48.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Fusion Automation 49",
+    "slug": "fusion-automation-49",
+    "country": "FR",
+    "robot_type": "delivery_robot",
+    "website": "https://fusion-automation-49.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Quantum Intelligence 50",
+    "slug": "quantum-intelligence-50",
+    "country": "US",
+    "robot_type": "humanoid",
+    "website": "https://quantum-intelligence-50.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Nova Dynamics 51",
+    "slug": "nova-dynamics-51",
+    "country": "US",
+    "robot_type": "robotaxi",
+    "website": "https://nova-dynamics-51.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Vector Labs 52",
+    "slug": "vector-labs-52",
+    "country": "IN",
+    "robot_type": "delivery_robot",
+    "website": "https://vector-labs-52.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Global Systems 53",
+    "slug": "global-systems-53",
+    "country": "US",
+    "robot_type": "service_robot",
+    "website": "https://global-systems-53.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Fusion Robotics 54",
+    "slug": "fusion-robotics-54",
+    "country": "KR",
+    "robot_type": "industrial_robot",
+    "website": "https://fusion-robotics-54.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Sky Automation 55",
+    "slug": "sky-automation-55",
+    "country": "IN",
+    "robot_type": "service_robot",
+    "website": "https://sky-automation-55.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Nova Systems 56",
+    "slug": "nova-systems-56",
+    "country": "DE",
+    "robot_type": "robotaxi",
+    "website": "https://nova-systems-56.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Quantum Machines 57",
+    "slug": "quantum-machines-57",
+    "country": "US",
+    "robot_type": "robotaxi",
+    "website": "https://quantum-machines-57.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Atlas Dynamics 58",
+    "slug": "atlas-dynamics-58",
+    "country": "IN",
+    "robot_type": "industrial_robot",
+    "website": "https://atlas-dynamics-58.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Quantum Machines 59",
+    "slug": "quantum-machines-59",
+    "country": "DE",
+    "robot_type": "delivery_robot",
+    "website": "https://quantum-machines-59.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Nova Automation 60",
+    "slug": "nova-automation-60",
+    "country": "JP",
+    "robot_type": "service_robot",
+    "website": "https://nova-automation-60.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Prime Machines 61",
+    "slug": "prime-machines-61",
+    "country": "DE",
+    "robot_type": "delivery_robot",
+    "website": "https://prime-machines-61.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Vector Labs 62",
+    "slug": "vector-labs-62",
+    "country": "US",
+    "robot_type": "humanoid",
+    "website": "https://vector-labs-62.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Apex Robotics 63",
+    "slug": "apex-robotics-63",
+    "country": "CN",
+    "robot_type": "humanoid",
+    "website": "https://apex-robotics-63.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Apex Motion 64",
+    "slug": "apex-motion-64",
+    "country": "US",
+    "robot_type": "humanoid",
+    "website": "https://apex-motion-64.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Prime Labs 65",
+    "slug": "prime-labs-65",
+    "country": "IN",
+    "robot_type": "warehouse_robot",
+    "website": "https://prime-labs-65.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Apex Dynamics 66",
+    "slug": "apex-dynamics-66",
+    "country": "CA",
+    "robot_type": "delivery_robot",
+    "website": "https://apex-dynamics-66.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Nova Motion 67",
+    "slug": "nova-motion-67",
+    "country": "CN",
+    "robot_type": "warehouse_robot",
+    "website": "https://nova-motion-67.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Sky Motion 68",
+    "slug": "sky-motion-68",
+    "country": "CA",
+    "robot_type": "robotaxi",
+    "website": "https://sky-motion-68.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Prime Labs 69",
+    "slug": "prime-labs-69",
+    "country": "SG",
+    "robot_type": "robotaxi",
+    "website": "https://prime-labs-69.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Sky Robotics 70",
+    "slug": "sky-robotics-70",
+    "country": "SG",
+    "robot_type": "warehouse_robot",
+    "website": "https://sky-robotics-70.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Quantum Machines 71",
+    "slug": "quantum-machines-71",
+    "country": "CN",
+    "robot_type": "robotaxi",
+    "website": "https://quantum-machines-71.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Nova Dynamics 72",
+    "slug": "nova-dynamics-72",
+    "country": "CN",
+    "robot_type": "humanoid",
+    "website": "https://nova-dynamics-72.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Urban Motion 73",
+    "slug": "urban-motion-73",
+    "country": "IN",
+    "robot_type": "warehouse_robot",
+    "website": "https://urban-motion-73.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Vector Machines 74",
+    "slug": "vector-machines-74",
+    "country": "CN",
+    "robot_type": "industrial_robot",
+    "website": "https://vector-machines-74.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Urban Labs 75",
+    "slug": "urban-labs-75",
+    "country": "JP",
+    "robot_type": "robotaxi",
+    "website": "https://urban-labs-75.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Quantum Dynamics 76",
+    "slug": "quantum-dynamics-76",
+    "country": "GB",
+    "robot_type": "delivery_robot",
+    "website": "https://quantum-dynamics-76.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Nova Motion 77",
+    "slug": "nova-motion-77",
+    "country": "KR",
+    "robot_type": "service_robot",
+    "website": "https://nova-motion-77.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Urban Labs 78",
+    "slug": "urban-labs-78",
+    "country": "SG",
+    "robot_type": "industrial_robot",
+    "website": "https://urban-labs-78.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Fusion Systems 79",
+    "slug": "fusion-systems-79",
+    "country": "KR",
+    "robot_type": "service_robot",
+    "website": "https://fusion-systems-79.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Nova Labs 80",
+    "slug": "nova-labs-80",
+    "country": "KR",
+    "robot_type": "warehouse_robot",
+    "website": "https://nova-labs-80.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Apex Dynamics 81",
+    "slug": "apex-dynamics-81",
+    "country": "SG",
+    "robot_type": "industrial_robot",
+    "website": "https://apex-dynamics-81.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Sky Labs 82",
+    "slug": "sky-labs-82",
+    "country": "JP",
+    "robot_type": "humanoid",
+    "website": "https://sky-labs-82.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Apex Automation 83",
+    "slug": "apex-automation-83",
+    "country": "AE",
+    "robot_type": "robotaxi",
+    "website": "https://apex-automation-83.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Sky Motion 84",
+    "slug": "sky-motion-84",
+    "country": "KR",
+    "robot_type": "industrial_robot",
+    "website": "https://sky-motion-84.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Global Dynamics 85",
+    "slug": "global-dynamics-85",
+    "country": "CA",
+    "robot_type": "warehouse_robot",
+    "website": "https://global-dynamics-85.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Atlas Systems 86",
+    "slug": "atlas-systems-86",
+    "country": "GB",
+    "robot_type": "service_robot",
+    "website": "https://atlas-systems-86.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Sky Intelligence 87",
+    "slug": "sky-intelligence-87",
+    "country": "US",
+    "robot_type": "delivery_robot",
+    "website": "https://sky-intelligence-87.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Sky Intelligence 88",
+    "slug": "sky-intelligence-88",
+    "country": "GB",
+    "robot_type": "robotaxi",
+    "website": "https://sky-intelligence-88.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Apex Dynamics 89",
+    "slug": "apex-dynamics-89",
+    "country": "FR",
+    "robot_type": "delivery_robot",
+    "website": "https://apex-dynamics-89.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Global Machines 90",
+    "slug": "global-machines-90",
+    "country": "DE",
+    "robot_type": "robotaxi",
+    "website": "https://global-machines-90.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Sky Dynamics 91",
+    "slug": "sky-dynamics-91",
+    "country": "FR",
+    "robot_type": "warehouse_robot",
+    "website": "https://sky-dynamics-91.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Prime Robotics 92",
+    "slug": "prime-robotics-92",
+    "country": "IN",
+    "robot_type": "robotaxi",
+    "website": "https://prime-robotics-92.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Fusion Systems 93",
+    "slug": "fusion-systems-93",
+    "country": "DE",
+    "robot_type": "humanoid",
+    "website": "https://fusion-systems-93.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Global Robotics 94",
+    "slug": "global-robotics-94",
+    "country": "CA",
+    "robot_type": "industrial_robot",
+    "website": "https://global-robotics-94.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Fusion Dynamics 95",
+    "slug": "fusion-dynamics-95",
+    "country": "AE",
+    "robot_type": "industrial_robot",
+    "website": "https://fusion-dynamics-95.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Vector Labs 96",
+    "slug": "vector-labs-96",
+    "country": "KR",
+    "robot_type": "delivery_robot",
+    "website": "https://vector-labs-96.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Sky Automation 97",
+    "slug": "sky-automation-97",
+    "country": "JP",
+    "robot_type": "delivery_robot",
+    "website": "https://sky-automation-97.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Vector Intelligence 98",
+    "slug": "vector-intelligence-98",
+    "country": "SG",
+    "robot_type": "delivery_robot",
+    "website": "https://vector-intelligence-98.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Prime Systems 99",
+    "slug": "prime-systems-99",
+    "country": "CA",
+    "robot_type": "robotaxi",
+    "website": "https://prime-systems-99.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Vector Systems 100",
+    "slug": "vector-systems-100",
+    "country": "IN",
+    "robot_type": "humanoid",
+    "website": "https://vector-systems-100.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Urban Labs 101",
+    "slug": "urban-labs-101",
+    "country": "AE",
+    "robot_type": "warehouse_robot",
+    "website": "https://urban-labs-101.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Urban Intelligence 102",
+    "slug": "urban-intelligence-102",
+    "country": "GB",
+    "robot_type": "warehouse_robot",
+    "website": "https://urban-intelligence-102.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Vector Automation 103",
+    "slug": "vector-automation-103",
+    "country": "CN",
+    "robot_type": "robotaxi",
+    "website": "https://vector-automation-103.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Vector Robotics 104",
+    "slug": "vector-robotics-104",
+    "country": "IN",
+    "robot_type": "warehouse_robot",
+    "website": "https://vector-robotics-104.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Atlas Intelligence 105",
+    "slug": "atlas-intelligence-105",
+    "country": "CA",
+    "robot_type": "service_robot",
+    "website": "https://atlas-intelligence-105.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Sky Machines 106",
+    "slug": "sky-machines-106",
+    "country": "SG",
+    "robot_type": "warehouse_robot",
+    "website": "https://sky-machines-106.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Fusion Dynamics 107",
+    "slug": "fusion-dynamics-107",
+    "country": "KR",
+    "robot_type": "warehouse_robot",
+    "website": "https://fusion-dynamics-107.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Nova Intelligence 108",
+    "slug": "nova-intelligence-108",
+    "country": "KR",
+    "robot_type": "warehouse_robot",
+    "website": "https://nova-intelligence-108.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Urban Robotics 109",
+    "slug": "urban-robotics-109",
+    "country": "CN",
+    "robot_type": "warehouse_robot",
+    "website": "https://urban-robotics-109.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Global Labs 110",
+    "slug": "global-labs-110",
+    "country": "IN",
+    "robot_type": "industrial_robot",
+    "website": "https://global-labs-110.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Global Systems 111",
+    "slug": "global-systems-111",
+    "country": "DE",
+    "robot_type": "humanoid",
+    "website": "https://global-systems-111.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Global Robotics 112",
+    "slug": "global-robotics-112",
+    "country": "DE",
+    "robot_type": "industrial_robot",
+    "website": "https://global-robotics-112.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Apex Labs 113",
+    "slug": "apex-labs-113",
+    "country": "KR",
+    "robot_type": "warehouse_robot",
+    "website": "https://apex-labs-113.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Nova Intelligence 114",
+    "slug": "nova-intelligence-114",
+    "country": "DE",
+    "robot_type": "warehouse_robot",
+    "website": "https://nova-intelligence-114.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Nova Machines 115",
+    "slug": "nova-machines-115",
+    "country": "JP",
+    "robot_type": "delivery_robot",
+    "website": "https://nova-machines-115.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Prime Systems 116",
+    "slug": "prime-systems-116",
+    "country": "US",
+    "robot_type": "warehouse_robot",
+    "website": "https://prime-systems-116.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Global Motion 117",
+    "slug": "global-motion-117",
+    "country": "CA",
+    "robot_type": "humanoid",
+    "website": "https://global-motion-117.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Prime Machines 118",
+    "slug": "prime-machines-118",
+    "country": "US",
+    "robot_type": "robotaxi",
+    "website": "https://prime-machines-118.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Sky Intelligence 119",
+    "slug": "sky-intelligence-119",
+    "country": "JP",
+    "robot_type": "industrial_robot",
+    "website": "https://sky-intelligence-119.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Apex Automation 120",
+    "slug": "apex-automation-120",
+    "country": "CA",
+    "robot_type": "robotaxi",
+    "website": "https://apex-automation-120.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Urban Labs 121",
+    "slug": "urban-labs-121",
+    "country": "KR",
+    "robot_type": "service_robot",
+    "website": "https://urban-labs-121.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Global Intelligence 122",
+    "slug": "global-intelligence-122",
+    "country": "GB",
+    "robot_type": "industrial_robot",
+    "website": "https://global-intelligence-122.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Fusion Machines 123",
+    "slug": "fusion-machines-123",
+    "country": "SG",
+    "robot_type": "industrial_robot",
+    "website": "https://fusion-machines-123.example.com",
+    "status": "active"
+  },
+  {
+    "name": "Atlas Dynamics 124",
+    "slug": "atlas-dynamics-124",
+    "country": "GB",
+    "robot_type": "delivery_robot",
+    "website": "https://atlas-dynamics-124.example.com",
+    "status": "active"
+  }
+]
