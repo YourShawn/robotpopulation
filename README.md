@@ -4,6 +4,9 @@
 - 中文（本页）
 - English: [README.en.md](./README.en.md)
 
+开发规范 / Dev Rules:
+- [CODE_QUALITY_GUARDRAILS.md](./CODE_QUALITY_GUARDRAILS.md)
+
 ## 项目简介
 
 这是一个**全球城市机器人数量展示平台**。
