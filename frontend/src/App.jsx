@@ -22,7 +22,7 @@ const THEMES = {
 const I18N = {
   zh: {
     title: 'Robot City Atlas',
-    subtitle: '全球机器人部署地图',
+    subtitle: '全球机器人部署可视化',
     refresh: '刷新地图',
     robotFilter: '机器人类型',
     sourceFilter: '来源类型',
@@ -88,6 +88,7 @@ export default function App() {
   const [sourceType, setSourceType] = useState('');
   const [cityItems, setCityItems] = useState([]);
   const [showOps, setShowOps] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const [viewLevel, setViewLevel] = useState('city');
   const [stats, setStats] = useState({ rawArticles: 0, extractedFacts: 0, canonicalEvents: 0, totalCities: 0, byRobotType: [] });
 
@@ -199,86 +200,76 @@ export default function App() {
   }
 
   return (
-    <div className={`layout ${THEMES[theme].appClass}`}>
-      <aside className="panel">
-        <div className="topRow">
-          <h2>{t.title}</h2>
-          <div className="miniControls">
-            <select value={lang} onChange={(e) => setLang(e.target.value)}>
-              <option value="zh">中文</option>
-              <option value="en">English</option>
-              <option value="es">Español</option>
-              <option value="fr">Français</option>
-              <option value="ja">日本語</option>
+    <div className={`layout ${THEMES[theme].appClass}`} style={{ gridTemplateColumns: collapsed ? '46px 1fr' : '360px 1fr' }}>
+      <aside className={`panel ${collapsed ? 'collapsed' : ''}`}>
+        <button className="collapseBtn" onClick={() => setCollapsed(!collapsed)}>{collapsed ? '⟩' : '⟨'}</button>
+
+        {!collapsed && (
+          <>
+            <div className="topRow">
+              <h2>{t.title}</h2>
+              <div className="miniControls">
+                <select value={lang} onChange={(e) => setLang(e.target.value)}>
+                  <option value="zh">中文</option>
+                  <option value="en">English</option>
+                  <option value="es">Español</option>
+                  <option value="fr">Français</option>
+                  <option value="ja">日本語</option>
+                </select>
+                <select value={theme} onChange={(e) => setTheme(e.target.value)}>
+                  <option value="dark">Dark</option>
+                  <option value="light">Light</option>
+                  <option value="neon">Neon</option>
+                </select>
+              </div>
+            </div>
+            <p>{t.subtitle}</p>
+
+            <label>{t.robotFilter}</label>
+            <select value={robotType} onChange={(e) => setRobotType(e.target.value)}>
+              <option value="">{t.all}</option>
+              <option value="robotaxi">robotaxi</option>
+              <option value="delivery">delivery</option>
+              <option value="warehouse">warehouse</option>
+              <option value="unknown">unknown</option>
             </select>
-            <select value={theme} onChange={(e) => setTheme(e.target.value)}>
-              <option value="dark">Dark</option>
-              <option value="light">Light</option>
-              <option value="neon">Neon</option>
+
+            <label>{t.sourceFilter}</label>
+            <select value={sourceType} onChange={(e) => setSourceType(e.target.value)}>
+              <option value="">{t.all}</option>
+              <option value="source-feed">source-feed</option>
+              <option value="search-news">search-news</option>
             </select>
-          </div>
-        </div>
-        <p>{t.subtitle}</p>
 
-        <label>{t.robotFilter}</label>
-        <select value={robotType} onChange={(e) => setRobotType(e.target.value)}>
-          <option value="">{t.all}</option>
-          <option value="robotaxi">robotaxi</option>
-          <option value="delivery">delivery</option>
-          <option value="warehouse">warehouse</option>
-          <option value="unknown">unknown</option>
-        </select>
+            <label>Map Level</label>
+            <select value={viewLevel} onChange={(e) => setViewLevel(e.target.value)}>
+              <option value="country">Country</option>
+              <option value="province">Province/State</option>
+              <option value="city">City</option>
+            </select>
 
-        <label>{t.sourceFilter}</label>
-        <select value={sourceType} onChange={(e) => setSourceType(e.target.value)}>
-          <option value="">{t.all}</option>
-          <option value="source-feed">source-feed</option>
-          <option value="search-news">search-news</option>
-        </select>
+            <button onClick={() => loadCities(viewLevel)}>{t.refresh}</button>
 
-        <label>Map Level</label>
-        <select value={viewLevel} onChange={(e) => setViewLevel(e.target.value)}>
-          <option value="country">Country</option>
-          <option value="province">Province/State</option>
-          <option value="city">City</option>
-        </select>
+            <div className="stats">
+              <div>{t.cityCoverage}: {stats.totalCities}</div>
+              <div>{t.events}: {stats.canonicalEvents}</div>
+            </div>
 
-        <button onClick={() => loadCities(viewLevel)}>{t.refresh}</button>
-
-        <div className="stats">
-          <div>{t.cityCoverage}: {stats.totalCities}</div>
-          <div>{t.events}: {stats.canonicalEvents}</div>
-          <div>{t.facts}: {stats.extractedFacts}</div>
-          <div>{t.raws}: {stats.rawArticles}</div>
-        </div>
-
-        <button className="secondary" onClick={() => setShowOps(!showOps)}>{t.dataOps}</button>
-        {showOps && (
-          <div className="opsBox">
-            <label>{t.keyword}</label>
-            <input value={query} onChange={(e) => setQuery(e.target.value)} />
-            <label>{t.limit}</label>
-            <input type="number" min={5} max={80} value={crawlLimit} onChange={(e) => setCrawlLimit(e.target.value)} />
-            <button onClick={runCrawl} disabled={loading}>{loading ? t.running : t.crawl}</button>
-            <button onClick={runCompanyCrawl} disabled={loading}>{loading ? t.running : t.crawlCompany}</button>
-            <button onClick={runFeedCrawl} disabled={loading}>{loading ? t.running : t.crawlFeed}</button>
-          </div>
-        )}
-        <p className="msg">{msg}</p>
-
-        {selected?.properties?.label && (
-          <div className="cityPanel">
-            <h3>{selected.properties.label}</h3>
-            <ul>
-              {cityItems.map((item) => (
-                <li key={item._id}>
-                  <div><strong>{item.companyCanonical || item.company}</strong> · {item.robotType} · {item.eventType}</div>
-                  <div>{t.sourceCount}: {item.sourceCount} · confidence: {Number(item.confidence || 0).toFixed(2)}</div>
-                  {item.sourceUrls?.[0] && <a href={item.sourceUrls[0]} target="_blank" rel="noreferrer">source</a>}
-                </li>
-              ))}
-            </ul>
-          </div>
+            {selected?.properties?.label && (
+              <div className="cityPanel">
+                <h3>{selected.properties.label}</h3>
+                <ul>
+                  {cityItems.map((item) => (
+                    <li key={item._id}>
+                      <div><strong>{item.companyCanonical || item.company}</strong> · {item.robotType} · {item.eventType}</div>
+                      <div>{t.sourceCount}: {item.sourceCount} · confidence: {Number(item.confidence || 0).toFixed(2)}</div>
+                      {item.sourceUrls?.[0] && <a href={item.sourceUrls[0]} target="_blank" rel="noreferrer">source</a>}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </>
         )}
       </aside>
 
