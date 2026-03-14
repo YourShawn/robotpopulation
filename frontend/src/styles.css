@@ -13,7 +13,8 @@ html, body, #root { margin: 0; width: 100%; height: 100%; font-family: Inter, sy
 .topRow { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .panel h2 { margin: 0; color: var(--title); font-size: 22px; }
 .panel p { margin: 6px 0 12px; color: var(--muted); font-size: 13px; }
-.miniControls { display: flex; gap: 6px; }
+.miniControls { display: flex; gap: 6px; align-items: center; }
+.miniControls .themeToggleBtn { width: auto !important; margin: 0 !important; padding: 8px 10px !important; }
 
 .panel label { display: block; margin: 10px 0 6px; font-size: 13px; color: var(--muted); }
 .panel input, .panel select {

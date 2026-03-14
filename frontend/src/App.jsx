@@ -21,6 +21,12 @@ export default function App() {
   const [lang, setLang] = useState('zh');
   const [theme, setTheme] = useState('dark');
   const t = I18N[lang] || I18N.zh;
+  const themeOrder = ['dark', 'light', 'neon'];
+  const nextTheme = () => {
+    const idx = themeOrder.indexOf(theme);
+    const next = themeOrder[(idx + 1) % themeOrder.length];
+    setTheme(next);
+  };
 
   const mapRef = useRef(null);
 
@@ -134,11 +140,9 @@ export default function App() {
                   <option value="fr">Français</option>
                   <option value="ja">日本語</option>
                 </select>
-                <select value={theme} onChange={(e) => setTheme(e.target.value)}>
-                  <option value="dark">Dark</option>
-                  <option value="light">Light</option>
-                  <option value="neon">Neon</option>
-                </select>
+                <button type="button" className="themeToggleBtn" onClick={nextTheme}>
+                  Theme: {theme}
+                </button>
               </div>
             </div>
             <p>{t.subtitle}</p>
