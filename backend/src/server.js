@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import mongoose from 'mongoose';
 import { apiRouter } from './routes/api.js';
+import { startScheduler } from './services/schedulerService.js';
 
 const app = express();
 
@@ -27,6 +28,7 @@ mongoose
   .then(() => {
     app.listen(PORT, () => {
       console.log(`API listening on :${PORT}`);
+      startScheduler();
     });
   })
   .catch((err) => {

@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { crawlSearch, crawlCompanySources, crawlFeedSources } from '../services/scraperService.js';
 import { sourcePools } from '../config/sources.js';
 import { RawArticle } from '../models/RawArticle.js';
 import { ExtractedFact } from '../models/ExtractedFact.js';
@@ -13,49 +12,6 @@ apiRouter.get('/health', (_, res) => {
 
 apiRouter.get('/sources', (_, res) => res.json(sourcePools));
 
-apiRouter.post('/crawl', async (req, res) => {
-  try {
-    const { query, limit = 20 } = req.body ?? {};
-    if (!query) return res.status(400).json({ error: 'query is required' });
-    const result = await crawlSearch({
-      query,
-      limit: Number(limit),
-      userAgent: process.env.USER_AGENT,
-      requestDelayMs: Number(process.env.REQUEST_DELAY_MS || 800)
-    });
-    return res.json(result);
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
-  }
-});
-
-apiRouter.post('/crawl/companies', async (req, res) => {
-  try {
-    const { perSourceLimit = 6 } = req.body ?? {};
-    const result = await crawlCompanySources({
-      perSourceLimit: Number(perSourceLimit),
-      userAgent: process.env.USER_AGENT,
-      requestDelayMs: Number(process.env.REQUEST_DELAY_MS || 800)
-    });
-    return res.json(result);
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
-  }
-});
-
-apiRouter.post('/crawl/feeds', async (req, res) => {
-  try {
-    const { perFeedLimit = 10 } = req.body ?? {};
-    const result = await crawlFeedSources({
-      perFeedLimit: Number(perFeedLimit),
-      userAgent: process.env.USER_AGENT,
-      requestDelayMs: Number(process.env.REQUEST_DELAY_MS || 800)
-    });
-    return res.json(result);
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
-  }
-});
 
 apiRouter.get('/stats', async (_, res) => {
   const [rawArticles, extractedFacts, canonicalEvents, totalCities, byRobotType] = await Promise.all([

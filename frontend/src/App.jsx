@@ -80,14 +80,11 @@ export default function App() {
 
   const [geojson, setGeojson] = useState({ type: 'FeatureCollection', features: [] });
   const [selected, setSelected] = useState(null);
-  const [query, setQuery] = useState('robotaxi launch city');
-  const [crawlLimit, setCrawlLimit] = useState(20);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
   const [robotType, setRobotType] = useState('');
   const [sourceType, setSourceType] = useState('');
   const [cityItems, setCityItems] = useState([]);
-  const [showOps, setShowOps] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [viewLevel, setViewLevel] = useState('city');
   const [stats, setStats] = useState({ rawArticles: 0, extractedFacts: 0, canonicalEvents: 0, totalCities: 0, byRobotType: [] });
@@ -158,46 +155,6 @@ export default function App() {
     loadCities(viewLevel);
   }, [viewLevel]);
 
-  async function runCrawl() {
-    setLoading(true);
-    try {
-      const { data } = await axios.post(`${API_BASE}/crawl`, { query, limit: Number(crawlLimit) });
-      setMsg(`OK: ${data.eventsMerged || 0} events merged`);
-      await loadCities();
-    } catch (e) {
-      setMsg(`Error: ${e.response?.data?.error || e.message}`);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function runCompanyCrawl() {
-    setLoading(true);
-    try {
-      const { data } = await axios.post(`${API_BASE}/crawl/companies`, { perSourceLimit: 6 });
-      const total = data.details?.reduce((n, x) => n + (x.eventsMerged || 0), 0) || 0;
-      setMsg(`OK: ${total} events merged`);
-      await loadCities();
-    } catch (e) {
-      setMsg(`Error: ${e.response?.data?.error || e.message}`);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function runFeedCrawl() {
-    setLoading(true);
-    try {
-      const { data } = await axios.post(`${API_BASE}/crawl/feeds`, { perFeedLimit: 10 });
-      const total = data.details?.reduce((n, x) => n + (x.eventsMerged || 0), 0) || 0;
-      setMsg(`OK: ${total} events merged`);
-      await loadCities();
-    } catch (e) {
-      setMsg(`Error: ${e.response?.data?.error || e.message}`);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   return (
     <div className={`layout ${THEMES[theme].appClass}`} style={{ gridTemplateColumns: collapsed ? '46px 1fr' : '360px 1fr' }}>
