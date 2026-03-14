@@ -10,12 +10,15 @@ export const companySourcesSeed = [
   { company_slug: 'serve-robotics', source_type: 'news', url: 'https://serve.co/news', crawl_strategy: 'list_page', active: true },
 
   { company_slug: 'nuro', source_type: 'blog', url: 'https://www.nuro.ai/blog', crawl_strategy: 'list_page', active: true },
+  { company_slug: 'nuro', source_type: 'permit', url: 'https://www.dmv.ca.gov/portal/vehicle-industry-services/autonomous-vehicles/autonomous-vehicle-testing-permit-holders/', crawl_strategy: 'structured_table', active: true },
 
   { company_slug: 'kiwibot', source_type: 'blog', url: 'https://www.kiwibot.com/blog', crawl_strategy: 'list_page', active: true },
   { company_slug: 'coco-robotics', source_type: 'blog', url: 'https://www.cocodelivery.com/blog', crawl_strategy: 'list_page', active: true },
 
   { company_slug: 'zoox', source_type: 'news', url: 'https://zoox.com/news/', crawl_strategy: 'list_page', active: true },
+  { company_slug: 'zoox', source_type: 'permit', url: 'https://www.dmv.ca.gov/portal/vehicle-industry-services/autonomous-vehicles/autonomous-vehicle-testing-permit-holders/', crawl_strategy: 'structured_table', active: true },
   { company_slug: 'pony-ai', source_type: 'news', url: 'https://pony.ai/news/', crawl_strategy: 'list_page', active: true },
+  { company_slug: 'pony-ai', source_type: 'permit', url: 'https://www.cpuc.ca.gov/industries-and-topics/transportation/passenger-transportation/autonomous-vehicle-programs/autonomous-vehicle-passenger-service-phase-i-drivered', crawl_strategy: 'structured_table', active: true },
   { company_slug: 'weride', source_type: 'news', url: 'https://www.weride.ai/news', crawl_strategy: 'list_page', active: true },
   { company_slug: 'autox', source_type: 'blog', url: 'https://www.autox.ai/blog', crawl_strategy: 'list_page', active: true }
 ];

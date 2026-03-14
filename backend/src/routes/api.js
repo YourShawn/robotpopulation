@@ -31,17 +31,17 @@ apiRouter.get('/health', (_, res) => {
 
 apiRouter.get('/sources', (_, res) => res.json(sourcePools));
 
-
 apiRouter.get('/stats', async (_, res) => {
-  const [rawArticles, extractedFacts, canonicalEvents, totalCities, byRobotType] = await Promise.all([
+  const [rawArticles, extractedFacts, canonicalEvents, totalCities, byRobotType, estimatedRobots] = await Promise.all([
     RawArticle.countDocuments(),
     ExtractedFact.countDocuments(),
     CanonicalEvent.countDocuments(),
     CanonicalEvent.distinct('cityCanonical').then((c) => c.filter((x) => x && x !== 'unknown').length),
-    CanonicalEvent.aggregate([{ $group: { _id: '$robotType', count: { $sum: 1 } } }, { $sort: { count: -1 } }])
+    CanonicalEvent.aggregate([{ $group: { _id: '$robotType', count: { $sum: 1 } } }, { $sort: { count: -1 } }]),
+    CanonicalEvent.aggregate([{ $group: { _id: null, total: { $sum: { $ifNull: ['$countBest', 0] } } } }]).then((r) => r[0]?.total || 0)
   ]);
 
-  res.json({ rawArticles, extractedFacts, canonicalEvents, totalCities, byRobotType });
+  res.json({ rawArticles, extractedFacts, canonicalEvents, totalCities, estimatedRobots, byRobotType });
 });
 
 apiRouter.get('/events', async (req, res) => {
@@ -58,7 +58,7 @@ apiRouter.get('/events', async (req, res) => {
   if (eventType) filter.eventType = eventType;
   if (company) filter.companyCanonical = company;
 
-  const data = await CanonicalEvent.find(filter).sort({ lastSeen: -1 }).limit(Number(limit));
+  const data = await CanonicalEvent.find(filter).sort({ confidence: -1, sourceCount: -1, lastSeen: -1 }).limit(Number(limit));
   res.json({ total: data.length, data });
 });
 
@@ -75,14 +75,16 @@ apiRouter.get('/map/regions', async (req, res) => {
     {
       $group: {
         _id: groupId,
-        count: { $sum: 1 },
+        eventCount: { $sum: 1 },
         sourceCount: { $sum: '$sourceCount' },
+        deployedRobots: { $sum: { $ifNull: ['$countBest', 0] } },
+        companySet: { $addToSet: '$companyCanonical' },
         lat: { $avg: '$location.lat' },
         lon: { $avg: '$location.lon' },
         latestAt: { $max: '$lastSeen' }
       }
     },
-    { $sort: { count: -1 } }
+    { $sort: { deployedRobots: -1, eventCount: -1 } }
   ]);
 
   const features = rows.map((r) => {
@@ -103,8 +105,10 @@ apiRouter.get('/map/regions', async (req, res) => {
         country,
         continent,
         cityCanonical: r._id.cityCanonical || null,
-        eventCount: r.count,
+        eventCount: r.eventCount,
         sourceCount: r.sourceCount,
+        deployedRobots: r.deployedRobots,
+        companyCount: (r.companySet || []).filter((x) => x && x !== 'unknown').length,
         latestAt: r.latestAt
       }
     };
@@ -112,4 +116,3 @@ apiRouter.get('/map/regions', async (req, res) => {
 
   res.json({ type: 'FeatureCollection', features });
 });
-
