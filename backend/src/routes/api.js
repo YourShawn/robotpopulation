@@ -70,9 +70,10 @@ apiRouter.get('/stats', async (_, res) => {
 });
 
 apiRouter.get('/events', async (req, res) => {
-  const { city, country, robotType, eventType, company, limit = 100 } = req.query;
+  const { city, province, country, robotType, eventType, company, limit = 100 } = req.query;
   const filter = {};
   if (city) filter.city = city;
+  if (province) filter.province = province;
   if (country) filter.country = country;
   if (robotType) filter.robotType = robotType;
   if (eventType) filter.eventType = eventType;
@@ -82,12 +83,19 @@ apiRouter.get('/events', async (req, res) => {
   res.json({ total: data.length, data });
 });
 
-apiRouter.get('/map/cities', async (_, res) => {
+apiRouter.get('/map/regions', async (req, res) => {
+  const { level = 'city' } = req.query;
+
+  let groupId;
+  if (level === 'country') groupId = { country: '$country' };
+  else if (level === 'province') groupId = { country: '$country', province: '$province' };
+  else groupId = { city: '$city', province: '$province', country: '$country', cityCanonical: '$cityCanonical' };
+
   const rows = await CanonicalEvent.aggregate([
     { $match: { 'location.lat': { $ne: null }, 'location.lon': { $ne: null } } },
     {
       $group: {
-        _id: { city: '$city', province: '$province', country: '$country', cityCanonical: '$cityCanonical' },
+        _id: groupId,
         count: { $sum: 1 },
         sourceCount: { $sum: '$sourceCount' },
         lat: { $avg: '$location.lat' },
@@ -98,19 +106,29 @@ apiRouter.get('/map/cities', async (_, res) => {
     { $sort: { count: -1 } }
   ]);
 
-  const features = rows.map((r) => ({
-    type: 'Feature',
-    geometry: { type: 'Point', coordinates: [r.lon, r.lat] },
-    properties: {
-      city: r._id.city,
-      cityCanonical: r._id.cityCanonical,
-      province: r._id.province,
-      country: r._id.country,
-      eventCount: r.count,
-      sourceCount: r.sourceCount,
-      latestAt: r.latestAt
-    }
-  }));
+  const features = rows.map((r) => {
+    const city = r._id.city || null;
+    const province = r._id.province || null;
+    const country = r._id.country || null;
+    const label = level === 'country' ? country : level === 'province' ? `${province}, ${country}` : `${city}, ${province}`;
+
+    return {
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [r.lon, r.lat] },
+      properties: {
+        level,
+        label,
+        city,
+        province,
+        country,
+        cityCanonical: r._id.cityCanonical || null,
+        eventCount: r.count,
+        sourceCount: r.sourceCount,
+        latestAt: r.latestAt
+      }
+    };
+  });
 
   res.json({ type: 'FeatureCollection', features });
 });
+

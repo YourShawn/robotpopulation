@@ -88,6 +88,7 @@ export default function App() {
   const [sourceType, setSourceType] = useState('');
   const [cityItems, setCityItems] = useState([]);
   const [showOps, setShowOps] = useState(false);
+  const [viewLevel, setViewLevel] = useState('city');
   const [stats, setStats] = useState({ rawArticles: 0, extractedFacts: 0, canonicalEvents: 0, totalCities: 0, byRobotType: [] });
 
   const heatLayer = useMemo(() => ({
@@ -122,22 +123,39 @@ export default function App() {
     }
   }), []);
 
-  async function loadCities() {
-    const [citiesRes, statsRes] = await Promise.all([axios.get(`${API_BASE}/map/cities`), axios.get(`${API_BASE}/stats`)]);
+  async function loadCities(level = viewLevel) {
+    const [citiesRes, statsRes] = await Promise.all([
+      axios.get(`${API_BASE}/map/regions`, { params: { level } }),
+      axios.get(`${API_BASE}/stats`)
+    ]);
     setGeojson(citiesRes.data);
     setStats(statsRes.data);
   }
 
-  async function loadCityItems(city) {
-    const { data } = await axios.get(`${API_BASE}/events`, {
-      params: { city, robotType: robotType || undefined, sourceType: sourceType || undefined, limit: 30 }
-    });
+  async function loadRegionItems(props) {
+    const params = {
+      robotType: robotType || undefined,
+      sourceType: sourceType || undefined,
+      limit: 30
+    };
+
+    if (props.level === 'country') params.country = props.country;
+    else if (props.level === 'province') {
+      params.country = props.country;
+      params.province = props.province;
+    } else {
+      params.city = props.city;
+      params.province = props.province;
+      params.country = props.country;
+    }
+
+    const { data } = await axios.get(`${API_BASE}/events`, { params });
     setCityItems(data.data || []);
   }
 
   useEffect(() => {
-    loadCities();
-  }, []);
+    loadCities(viewLevel);
+  }, [viewLevel]);
 
   async function runCrawl() {
     setLoading(true);
@@ -218,7 +236,14 @@ export default function App() {
           <option value="search-news">search-news</option>
         </select>
 
-        <button onClick={loadCities}>{t.refresh}</button>
+        <label>Map Level</label>
+        <select value={viewLevel} onChange={(e) => setViewLevel(e.target.value)}>
+          <option value="country">Country</option>
+          <option value="province">Province/State</option>
+          <option value="city">City</option>
+        </select>
+
+        <button onClick={() => loadCities(viewLevel)}>{t.refresh}</button>
 
         <div className="stats">
           <div>{t.cityCoverage}: {stats.totalCities}</div>
@@ -241,9 +266,9 @@ export default function App() {
         )}
         <p className="msg">{msg}</p>
 
-        {selected?.properties?.city && (
+        {selected?.properties?.label && (
           <div className="cityPanel">
-            <h3>{selected.properties.city} · {selected.properties.province}</h3>
+            <h3>{selected.properties.label}</h3>
             <ul>
               {cityItems.map((item) => (
                 <li key={item._id}>
@@ -265,7 +290,7 @@ export default function App() {
             const f = e.features?.[0];
             if (f?.properties) {
               setSelected(f);
-              loadCityItems(f.properties.city);
+              loadRegionItems(f.properties);
             }
           }}
           interactiveLayerIds={['city-points']}
@@ -283,10 +308,9 @@ export default function App() {
               closeButton
             >
               <div>
-                <strong>{selected.properties.city}</strong>
+                <strong>{selected.properties.label}</strong>
                 <div>{t.eventCount}: {selected.properties.eventCount}</div>
                 <div>{t.sourceCount}: {selected.properties.sourceCount}</div>
-                <div>{selected.properties.province}, {selected.properties.country}</div>
               </div>
             </Popup>
           )}
