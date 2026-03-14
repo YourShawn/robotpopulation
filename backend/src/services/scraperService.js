@@ -79,26 +79,47 @@ async function upsertItems(rows, base) {
 }
 
 export async function crawlSearch({ query, limit = 20, userAgent, requestDelayMs = 1200 }) {
-  const url = 'https://duckduckgo.com/html/';
-  const { data } = await axios.get(url, {
-    params: { q: query },
-    headers: { 'User-Agent': userAgent }
-  });
-
-  const $ = cheerio.load(data);
   const rows = [];
 
-  $('.result').each((_, el) => {
-    if (rows.length >= limit) return;
-    const title = $(el).find('.result__a').text().trim();
-    const sourceUrl = $(el).find('.result__a').attr('href')?.trim();
-    const snippet = $(el).find('.result__snippet').text().trim();
-    if (title && sourceUrl) rows.push({ title, sourceUrl, snippet });
-  });
+  try {
+    const url = 'https://duckduckgo.com/html/';
+    const { data } = await axios.get(url, {
+      params: { q: query },
+      headers: { 'User-Agent': userAgent }
+    });
+
+    const $ = cheerio.load(data);
+    $('.result').each((_, el) => {
+      if (rows.length >= limit) return;
+      const title = $(el).find('.result__a').text().trim();
+      const sourceUrl = $(el).find('.result__a').attr('href')?.trim();
+      const snippet = $(el).find('.result__snippet').text().trim();
+      if (title && sourceUrl) rows.push({ title, sourceUrl, snippet });
+    });
+  } catch {
+    // ignore, fallback below
+  }
+
+  if (rows.length === 0) {
+    const rssUrl = 'https://news.google.com/rss/search';
+    const { data: xml } = await axios.get(rssUrl, {
+      params: { q: query, hl: 'en-US', gl: 'US', ceid: 'US:en' },
+      headers: { 'User-Agent': userAgent }
+    });
+
+    const $xml = cheerio.load(xml, { xmlMode: true });
+    $xml('item').each((_, el) => {
+      if (rows.length >= limit) return;
+      const title = $xml(el).find('title').first().text().trim();
+      const sourceUrl = $xml(el).find('link').first().text().trim();
+      const snippet = $xml(el).find('description').first().text().replace(/<[^>]+>/g, ' ').trim();
+      if (title && sourceUrl) rows.push({ title, sourceUrl, snippet });
+    });
+  }
 
   const stats = await upsertItems(rows, {
     query,
-    source: 'duckduckgo',
+    source: rows.length ? 'search' : 'unknown',
     sourceType: 'search-news',
     userAgent,
     requestDelayMs
